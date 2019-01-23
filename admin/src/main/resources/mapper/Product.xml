@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wiggin.mangersys.domain.mapper.ProductMapper">
+	<select id="selectProductPage" resultType="com.wiggin.mangersys.web.vo.response.ProductPageResponse">
+		SELECT p.id,p.product_sku AS productSku,product_weight as productWeight,product_net_weight as productNetWeight,
+		product_length as productLength,product_width as productWidth,product_height as productHeight,
+		designer_id as designerId,person_oprater_id as personOpraterId,person_seller_id as personSellerId,person_develop_id as personDevelopId,
+		procut_category_code1 as procutCategoryCode1,procut_category_name1 as procutCategoryName1,procut_category_code2 as procutCategoryCode2,
+		procut_category_name2 as procutCategoryName2,default_supplier_code as defaultSupplierCode,sp_unit_price as spUnitPrice,sp_currency_code as spCurrencyCode,
+		product_add_time as productAddTime,product_update_time as productUpdateTime,sale_status as saleStatus,create_time as createTime,update_time as updateTime,
+		product_title as productTitle,product_title_en as productTitleEn
+		 FROM api_product AS p LEFT JOIN api_product_desc AS d ON p.id = d.product_id
+		<where>
+			<if test='reqeustParam.sku != null and reqeustParam.sku != ""'>
+				p.product_sku = #{reqeustParam.sku}
+			</if>
+		</where>
+	</select>
+</mapper>

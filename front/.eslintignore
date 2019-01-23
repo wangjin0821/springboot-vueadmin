@@ -1,0 +1,7 @@
+build/*.js
+config/*.js
+src/assets
+src/componets/Panel/*.vue
+src/componets/SelectTree/*.vue
+src/views/system/*.vue
+src/utils/treeter.js
