@@ -139,15 +139,11 @@
           <el-button type="primary" @click="addSave" :loading="saveLoading">保 存</el-button>
         </div>
       </el-dialog>
-      <el-dialog title="导出产品信息" width="15%" :visible.sync="exportDialogVisible">
+      <el-dialog title="导出产品信息" width="25%" :visible.sync="exportDialogVisible">
         <div>
           <el-form ref="exportFromData" :model="exportFromData" :rules="formRules" :label-position="exportFromData.position">
             <el-form-item label="选择导出字段">
-              <el-checkbox :indeterminate="exportFromData.isIndeterminate" v-model="exportFromData.checkAll">全选</el-checkbox>
-              <div style="margin: 15px 0;"></div>
-              <el-checkbox-group v-model="exportFromData.fields">
-                <el-checkbox v-for="(item) in exportFromData.fields" :label="item.field" :key="item.field">{{ item.label }}</el-checkbox>
-              </el-checkbox-group>
+              <el-checkbox v-for="(item) in exportFromData.fields" v-model="item.checked" :label="item.field" :key="item.field">{{ item.label }}</el-checkbox>
             </el-form-item>
             <el-form-item label="文件类型">
               <el-radio-group v-model="exportFromData.fileType">
@@ -218,11 +214,11 @@ export default {
         checkAll: false,
         isIndeterminate: true,
         fields: [
-          { field: 'productSku', checked: false, label: 'SKU' },
-          { field: 'productTitle', checked: false, label: '名称' },
-          { field: 'productWeight', checked: false, label: '重量' },
-          { field: 'spUnitPrice', checked: false, label: '供应商价格' },
-          { field: 'spCurrencyCode', checked: false, label: '供应商价格币种' }
+          { field: 'productSku', checked: true, label: 'SKU' },
+          { field: 'productTitle', checked: true, label: '名称' },
+          { field: 'productWeight', checked: true, label: '重量' },
+          { field: 'spUnitPrice', checked: true, label: '供应商价格' },
+          { field: 'spCurrencyCode', checked: true, label: '供应商价格币种' }
         ],
         fileType: 'XLS'
       },
@@ -284,12 +280,32 @@ export default {
       this.loadData()
     },
     handlExprot() {
-      console.log(this.exportFromData)
+      // console.log(this.exportFromData)
       const exportFileList = []
-      exportFileList.push({ field: 'productSku', title: 'SKU' })
+      this.exportFromData.fields.forEach(element => {
+        if (element.checked) {
+          exportFileList.push({ field: element.field, title: element.label })
+        }
+      })
+      if (exportFileList.length <= 0) {
+        this.$message.error('请选择需要导出字段')
+        return
+      }
+      let fileType = 1
+      switch (this.exportFromData.fileType) {
+        case 'XLS':
+          fileType = 1
+          break
+        case 'XLSX':
+          fileType = 2
+          break
+        case 'CSV':
+          fileType = 3
+          break
+      }
       const listStr = JSON.stringify(exportFileList)
       // { list: listStr, async: 'false', parameter: '{"sku": "A301020101"}' }
-      downLoadMix({ list1: listStr, async: 'false', parameter: '{"sku": "A30102010111ss"}' }).then(res => {
+      downLoadMix({ list: listStr, async: 'false', fileType: fileType }).then(res => {
         this.$message('下载成功')
       }, reject => {
         this.$message.error(reject)
