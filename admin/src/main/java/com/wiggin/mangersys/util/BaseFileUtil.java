@@ -1,32 +1,36 @@
 package com.wiggin.mangersys.util;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.toolkit.IdWorker;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.wiggin.mangersys.config.BusinessException;
 import com.wiggin.mangersys.config.ExceptionCodeEnum;
 import com.wiggin.mangersys.constant.FileTypeEnum;
 import com.wiggin.mangersys.util.report.vo.BaseExportVO;
 import com.wiggin.mangersys.util.report.vo.ExportVO;
 
+import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.JRAbstractExporter;
 import net.sf.jasperreports.export.SimpleExporterInput;
-
-
 
 
 /**
@@ -35,6 +39,7 @@ import net.sf.jasperreports.export.SimpleExporterInput;
  * @author weiem
  *
  */
+@Slf4j
 public class BaseFileUtil {
 
     private static final String PATH = "temp/temporaryfile";
@@ -182,7 +187,7 @@ public class BaseFileUtil {
         }
     }
 
-    
+
     /**
      * 
      * @param zipFileName
@@ -201,7 +206,7 @@ public class BaseFileUtil {
         return zipFile(zipFileName, files);
     }
 
-    
+
     /**
      * 
      * @param zipFileName
@@ -242,5 +247,59 @@ public class BaseFileUtil {
         }
 
         return null;
+    }
+
+
+    /**
+     * 遍历目录
+     * 
+     * @param dir
+     */
+    public static void listDirectory(File dir, Collection<String> filePathList) {
+        if (!dir.exists()) {
+            throw new IllegalArgumentException("目录" + dir + "不存在！");
+        }
+        if (!dir.isDirectory()) {
+            throw new IllegalArgumentException(dir + "不是一个目录！");
+        }
+        FileFilter filter = new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return !".".equals(file.getName().substring(0, 1));
+            }
+        };
+        File files[] = dir.listFiles(filter);
+        boolean isAllFiles = true;
+        if (files != null && files.length > 0) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    isAllFiles = false;
+                    listDirectory(file, filePathList);
+                }
+            }
+            if (isAllFiles) {
+                filePathList.add(dir.getAbsolutePath());
+            }
+        }
+    }
+
+
+    public static void main(String[] args) {
+        File dir = new File("D:\\Program Files");
+        List<String> fileList = Lists.newLinkedList();
+        BaseFileUtil.listDirectory(dir, fileList);
+        log.info("size => {}, list => {}", fileList.size(), fileList);
+        /*FileFilter filter = new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.isFile() && "png".equals(file.getName().substring(file.getName().lastIndexOf(".") + 1));
+            }
+        };
+        BaseFileUtil.dirMap.forEach((filePath, dir) -> {
+            if (StringUtils.lastIndexOf(filePath, "UserInfo") > 0) {
+                File[] listFiles = dir.listFiles(filter);
+                log.info("listFiles => {}, {}", listFiles.length, JSON.toJSONString(listFiles));
+            }
+        });*/
     }
 }
