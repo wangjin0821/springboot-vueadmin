@@ -6,7 +6,7 @@ import java.util.Date;
 import lombok.Data;
 
 @Data
-public class EccangProductResponse {
+public class EcProductResponse {
 	
 	private String productSku;
 	private String productSpu;
@@ -69,4 +69,8 @@ public class EccangProductResponse {
 	private String brandCode;
 	private String brandName;
 	
+	/**
+	 * 产品主图url
+	 */
+	private String mainImg;
 }

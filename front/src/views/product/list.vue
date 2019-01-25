@@ -2,12 +2,12 @@
   <div>
     <imp-panel>
         <div class="box-title" slot="header" style="width: 100%;">
-          <el-row style="width: 100%;">
+          <!-- <el-row style="width: 100%;">
             <el-col :span="12">
               <el-button type="primary" icon="el-icon-plus" @click="exportDialogVisible = true">导出</el-button>
-              <!-- <router-link :to="{ path: 'userAdd'}">
+              <router-link :to="{ path: 'userAdd'}">
                 
-              </router-link> -->
+              </router-link> 
             </el-col>
             <el-col :span="12">
               <div class="el-input" style="width: 200px; float: right;">
@@ -16,7 +16,23 @@
                         class="el-input__inner">
               </div>
             </el-col>
-          </el-row>
+          </el-row> -->
+          <div class="filter-container">
+            <el-input :placeholder="listQuery.sku.title" v-model="listQuery.sku.value" style="width: 200px;" class="filter-item" @keyup.enter.native="search($event)"/>
+            <el-select v-model="listQuery.saleStatusList" :placeholder="listQuery.saleStatusList.title" clearable style="width: 90px" class="filter-item">
+              <el-option v-for="item in listQuery.saleStatusList.data" :key="item" :label="item" :value="item"/>
+            </el-select>
+            <el-select v-model="listQuery.categoryList" :placeholder="listQuery.categoryList.title" clearable class="filter-item" style="width: 130px">
+              <el-option v-for="item in listQuery.categoryList.data" :key="item.key" :label="item.display_name" :value="item.key"/>
+            </el-select>
+            <!-- <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
+              <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key"/>
+            </el-select> -->
+            <el-button class="filter-item" type="primary" icon="el-icon-search" @click="search($event)">搜索</el-button>
+            <!-- <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">新增</el-button> -->
+            <el-button class="filter-item" type="primary" icon="el-icon-download" @click="exportDialogVisible = true">导出</el-button>
+            <!-- <el-checkbox v-model="showReviewer" class="filter-item" style="margin-left:15px;" @change="tableKey=tableKey+1">测试</el-checkbox> -->
+          </div>
         </div>
         <div slot="body" v-loading="listLoading">
           <el-table
@@ -189,7 +205,22 @@ export default {
         label: 'name',
         id: 'id'
       },
-      searchKey: '',
+      listQuery: {
+        sku: {
+          title: 'SKU',
+          value: ''
+        },
+        saleStatusList: {
+          title: '销售状态',
+          value: 0,
+          data: []
+        },
+        categoryList: {
+          title: '产品分类',
+          value: 0,
+          data: []
+        }
+      },
       tableData: {
         pagination: {
           total: 0,
@@ -342,10 +373,15 @@ export default {
         this.$message.error(error)
       })
     },
+    loadQueryParams() {
+      if (this.listQuery.saleStatusList.data.length < 0) {
+        
+      }
+    },
     loadData() {
       this.listLoading = true
       getList({
-        sku: this.searchKey,
+        sku: [this.listQuery.sku.value],
         pagination: {
           size: this.tableData.pagination.pageSize,
           current: this.tableData.pagination.pageNo

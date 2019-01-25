@@ -25,8 +25,10 @@ import com.wiggin.mangersys.service.ProductService;
 import com.wiggin.mangersys.util.DateUtil;
 import com.wiggin.mangersys.util.Page;
 import com.wiggin.mangersys.util.apifeignclient.eccang.EccangApi;
-import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EccangProductRequest;
-import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EccangProductResponse;
+import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductCategoryResponse;
+import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductRequest;
+import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductResponse;
+import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductSaleStatusResponse;
 import com.wiggin.mangersys.web.vo.request.ProductPageRequest;
 import com.wiggin.mangersys.web.vo.response.ProductPageResponse;
 
@@ -44,6 +46,10 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class ProductServiceImpl implements ProductService {
+
+    private static List<EcProductSaleStatusResponse> productSaleStatusList;
+
+    private static List<EcProductCategoryResponse> productCategoryList;
 
     @Autowired
     private ProductMapper productMapper;
@@ -87,7 +93,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Integer syncProductList() {
         int returnCount = 0;
-        EccangProductRequest productReq = new EccangProductRequest();
+        EcProductRequest productReq = new EcProductRequest();
         Wrapper<Product> wrapper = new EntityWrapper<>();
         wrapper.orderBy("product_add_time", false);
         wrapper.last("LIMIT 1");
@@ -98,7 +104,7 @@ public class ProductServiceImpl implements ProductService {
             // productReq.setProductAddTimeTo(new
             // Date(System.currentTimeMillis()));
         }
-        Page<EccangProductResponse> productPage = eccangApi.getProductList(productReq);
+        Page<EcProductResponse> productPage = eccangApi.getProductList(productReq);
         if (productPage == null) {
             return returnCount;
         }
@@ -106,15 +112,15 @@ public class ProductServiceImpl implements ProductService {
         int pageSize = eccangApi.getPageSize().intValue();
         int pages = (int) Math.ceil(totalCount / pageSize);
         log.info("pages=>{}", pages);
-        List<EccangProductResponse> productList = productPage.getList();
+        List<EcProductResponse> productList = productPage.getList();
         returnCount += saveEccangProductList(productList);
         for (int i = 2; i <= pages; i++) {
             productReq.setPage(i);
-            Page<EccangProductResponse> productPageTemp = eccangApi.getProductList(productReq);
+            Page<EcProductResponse> productPageTemp = eccangApi.getProductList(productReq);
             if (productPage == null) {
                 return returnCount;
             }
-            List<EccangProductResponse> productResponseList = productPageTemp.getList();
+            List<EcProductResponse> productResponseList = productPageTemp.getList();
             returnCount += saveEccangProductList(productResponseList);
         }
         return returnCount;
@@ -127,7 +133,7 @@ public class ProductServiceImpl implements ProductService {
      * @param productList
      * @return
      */
-    private Integer saveEccangProductList(List<EccangProductResponse> productList) {
+    private Integer saveEccangProductList(List<EcProductResponse> productList) {
         int returnCount = 0;
         if (CollectionUtils.isEmpty(productList)) {
             return returnCount;
@@ -158,15 +164,15 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-        List<List<EccangProductResponse>> productListPartition = Lists.partition(productList, 100);
-        for (List<EccangProductResponse> eccangProductList : productListPartition) {
+        List<List<EcProductResponse>> productListPartition = Lists.partition(productList, 100);
+        for (List<EcProductResponse> eccangProductList : productListPartition) {
             log.info("eccangProductList.size=>{}", eccangProductList.size());
 
             // 多线程插入数据
             threadPoolTaskExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    for (EccangProductResponse eccangProductResponse : eccangProductList) {
+                    for (EcProductResponse eccangProductResponse : eccangProductList) {
                         Product product = new Product();
                         BeanUtils.copyProperties(eccangProductResponse, product);
                         String productSku = product.getProductSku();
@@ -203,6 +209,24 @@ public class ProductServiceImpl implements ProductService {
             });
         }
         return returnCount;
+    }
+
+
+    @Override
+    public List<EcProductCategoryResponse> getProductCategoryList() {
+        if (CollectionUtils.isEmpty(productCategoryList)) {
+            productCategoryList = eccangApi.getProductCategoryBase();
+        }
+        return productCategoryList;
+    }
+
+
+    @Override
+    public List<EcProductSaleStatusResponse> getSaleStatusList() {
+        if (CollectionUtils.isEmpty(productSaleStatusList)) {
+            productSaleStatusList = eccangApi.getSaleStatus();
+        }
+        return productSaleStatusList;
     }
 
 }

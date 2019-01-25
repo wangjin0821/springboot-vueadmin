@@ -1,11 +1,9 @@
 package com.wiggin.mangersys.util.apifeignclient.eccang.bean;
 
-import java.util.Date;
-
 import lombok.Data;
 
 @Data
-public class EccangProductRequest {
+public class EcProductRequest {
 	
 	private String productSku;
 	private String productSkuLike;

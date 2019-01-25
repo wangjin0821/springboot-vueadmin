@@ -1,5 +1,7 @@
 package com.wiggin.mangersys.web.vo.request;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.baomidou.mybatisplus.plugins.pagination.Pagination;
@@ -18,5 +20,14 @@ public class ProductPageRequest {
 	private Pagination pagination;
 	
 	@ApiModelProperty("sku")
-	private String sku;
+	private List<String> sku;
+	
+	@ApiModelProperty("销售状态")
+	private Integer saleStatus;
+	
+	@ApiModelProperty("一级分类")
+	private Integer category1;
+	
+	@ApiModelProperty("二级分类")
+	private Integer category2;
 }
