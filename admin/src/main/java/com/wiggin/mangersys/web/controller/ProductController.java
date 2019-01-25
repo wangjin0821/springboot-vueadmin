@@ -62,15 +62,20 @@ public class ProductController implements BaseExport {
     }
 
 
-    @GetMapping("/getProductCategoroyList")
-    public List<EcProductCategoryResponse> getProductCategoroyList() {
-        return productService.getProductCategoryList();
+    @GetMapping("/getCategoryList")
+    public List<EcProductCategoryResponse> getCategoryList() {
+        return productService.getCategoryList();
     }
 
 
     @GetMapping("/getSaleStatusList")
     public List<EcProductSaleStatusResponse> getSaleStatusList() {
         return productService.getSaleStatusList();
+    }
+    
+    @GetMapping("/syncProductMainImage")
+    public Integer syncProductMainImage(@RequestParam(name = "sku", required = false) String sku) {
+    	return productService.syncProductMainImage(sku);
     }
 
 

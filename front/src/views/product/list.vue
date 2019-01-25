@@ -19,11 +19,11 @@
           </el-row> -->
           <div class="filter-container">
             <el-input :placeholder="listQuery.sku.title" v-model="listQuery.sku.value" style="width: 200px;" class="filter-item" @keyup.enter.native="search($event)"/>
-            <el-select v-model="listQuery.saleStatusList" :placeholder="listQuery.saleStatusList.title" clearable style="width: 90px" class="filter-item">
-              <el-option v-for="item in listQuery.saleStatusList.data" :key="item" :label="item" :value="item"/>
+            <el-select v-model="listQuery.saleStatusList.value" :placeholder="listQuery.saleStatusList.title" clearable style="width: 160px" class="filter-item" @change="search($event)">
+              <el-option v-for="item in queryParam.saleStatusList" :key="item.pSaleId" :label="item.pSaleName" :value="item.pSaleId"/>
             </el-select>
-            <el-select v-model="listQuery.categoryList" :placeholder="listQuery.categoryList.title" clearable class="filter-item" style="width: 130px">
-              <el-option v-for="item in listQuery.categoryList.data" :key="item.key" :label="item.display_name" :value="item.key"/>
+            <el-select v-model="listQuery.categoryList.value" :placeholder="listQuery.categoryList.title" clearable class="filter-item" style="width: 160px" @change="search($event)">
+              <el-option v-for="item in queryParam.categoryList" :key="item.pcId" :label="item.pcName" :value="item.pcId"/>
             </el-select>
             <!-- <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
               <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key"/>
@@ -49,7 +49,7 @@
             <el-table-column
               label="图片" width="76">
               <template slot-scope="scope">
-                <img :src='scope.row.pictrue' style="height: 35px;vertical-align: middle;" alt="">
+                <img :src='scope.row.pictureUrl' style="height: 35px;vertical-align: middle;" alt="">
               </template>
             </el-table-column>
             <el-table-column
@@ -63,7 +63,7 @@
               </template>
             </el-table-column>
             <el-table-column
-              prop="saleStatus"
+              prop="saleStatusText"
               label="销售状态">
             </el-table-column>
             <el-table-column
@@ -180,7 +180,7 @@
 
 <script>
 import panel from '@/components/Panel'
-import { getList, deleted, update, add, downLoadMix } from '@/api/product'
+import { getList, deleted, update, add, downLoadMix, getSaleStatusList, getCategoryList } from '@/api/product'
 
 export default {
   components: {
@@ -205,6 +205,10 @@ export default {
         label: 'name',
         id: 'id'
       },
+      queryParam: {
+        saleStatusList: [],
+        categoryList: []
+      },
       listQuery: {
         sku: {
           title: 'SKU',
@@ -212,13 +216,11 @@ export default {
         },
         saleStatusList: {
           title: '销售状态',
-          value: 0,
-          data: []
+          value: ''
         },
         categoryList: {
           title: '产品分类',
-          value: 0,
-          data: []
+          value: ''
         }
       },
       tableData: {
@@ -374,19 +376,32 @@ export default {
       })
     },
     loadQueryParams() {
-      if (this.listQuery.saleStatusList.data.length < 0) {
-        
+      if (this.queryParam.saleStatusList.length <= 0) {
+        getSaleStatusList().then(res => {
+          this.queryParam.saleStatusList = res.data
+        })
+      }
+      if (this.queryParam.categoryList.length <= 0) {
+        getCategoryList().then(res => {
+          this.queryParam.categoryList = res.data
+        })
       }
     },
     loadData() {
       this.listLoading = true
-      getList({
-        sku: [this.listQuery.sku.value],
+      const params = {
         pagination: {
           size: this.tableData.pagination.pageSize,
           current: this.tableData.pagination.pageNo
         }
-      }).then(res => {
+      }
+      if (this.listQuery.sku.value !== '') {
+        params.sku = [this.listQuery.sku.value]
+      }
+      if (this.listQuery.saleStatusList.value !== '') {
+        params.saleStatus = this.listQuery.saleStatusList.value
+      }
+      getList(params).then(res => {
         this.listLoading = false
         this.tableData.rows = res.data.list
         this.tableData.pagination.total = res.data.totalCount
@@ -398,6 +413,7 @@ export default {
     }
   },
   created() {
+    this.loadQueryParams()
     this.loadData()
   }
 }

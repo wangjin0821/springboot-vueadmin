@@ -285,7 +285,7 @@ public class BaseFileUtil {
 
 
     public static void main(String[] args) {
-        File dir = new File("D:\\Program Files");
+        File dir = new File("E:\\picture");
         List<String> fileList = Lists.newLinkedList();
         BaseFileUtil.listDirectory(dir, fileList);
         log.info("size => {}, list => {}", fileList.size(), fileList);

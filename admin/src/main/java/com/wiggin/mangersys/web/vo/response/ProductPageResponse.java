@@ -14,4 +14,10 @@ public class ProductPageResponse extends Product {
 	private String productTitle;
 	
 	private String productTtileEn;
+	
+	private String saleStatusText;
+	
+	private String picturePath;
+	
+	private String pictureUrl;
 }

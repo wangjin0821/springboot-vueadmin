@@ -1,11 +1,13 @@
 package com.wiggin.mangersys.service.impl;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +21,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.wiggin.mangersys.domain.entity.Product;
 import com.wiggin.mangersys.domain.entity.ProductDesc;
+import com.wiggin.mangersys.domain.entity.ProductPicture;
 import com.wiggin.mangersys.domain.mapper.ProductDescMapper;
 import com.wiggin.mangersys.domain.mapper.ProductMapper;
+import com.wiggin.mangersys.domain.mapper.ProductPictureMapper;
 import com.wiggin.mangersys.service.ProductService;
 import com.wiggin.mangersys.util.DateUtil;
 import com.wiggin.mangersys.util.Page;
@@ -62,12 +66,26 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    
+    @Autowired
+    private ProductPictureMapper producrtPicMapper;
 
 
     @Override
     public Page<ProductPageResponse> getProductList(ProductPageRequest productReq) {
+    	log.info("productReq=>{}", productReq);
         Pagination pagination = productReq.getPagination();
         List<ProductPageResponse> selectPage = productMapper.selectProductPage(pagination, productReq);
+        if (CollectionUtils.isNotEmpty(selectPage)) {
+        	List<EcProductSaleStatusResponse> salesStatusList = getSaleStatusList();
+        	Map<Integer, EcProductSaleStatusResponse> salesStatusMap = Maps.uniqueIndex(salesStatusList, EcProductSaleStatusResponse::getPSaleId);
+        	selectPage.forEach(item -> {
+        		if (salesStatusMap.containsKey(item.getSaleStatus())) {
+        			item.setSaleStatusText(salesStatusMap.get(item.getSaleStatus()).getPSaleName());
+        		}
+        	}); 
+        }
+       
         log.info("getProductList => {}", selectPage);
         return new Page<>(pagination.getTotal(), pagination.getPages(), selectPage);
     }
@@ -213,7 +231,7 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
-    public List<EcProductCategoryResponse> getProductCategoryList() {
+    public List<EcProductCategoryResponse> getCategoryList() {
         if (CollectionUtils.isEmpty(productCategoryList)) {
             productCategoryList = eccangApi.getProductCategoryBase();
         }
@@ -228,5 +246,55 @@ public class ProductServiceImpl implements ProductService {
         }
         return productSaleStatusList;
     }
+
+
+	@Override
+	public Integer syncProductMainImage(String sku) {
+		List<Product> productList = Lists.newLinkedList();
+		if (StringUtils.isNotEmpty(sku)) {
+			Product product = new Product();
+			product.setProductSku(sku);
+			Product selectOne = productMapper.selectOne(product);
+			if (selectOne != null) {
+				productList.add(selectOne);
+			}
+		}
+		EntityWrapper<Product> entityWrapper = new EntityWrapper<>();
+		entityWrapper.eq("main_picture_id", 0);
+		entityWrapper.orderBy("id");
+		productList = productMapper.selectList(entityWrapper);
+		log.info("productList.size => {}", productList.size());
+		if (CollectionUtils.isNotEmpty(productList)) {
+			Date currentTime = DateUtil.currentTime();
+			for (Product product : productList) {
+				threadPoolTaskExecutor.execute(new Runnable() {
+					@Override
+					public void run() {
+						EcProductResponse productBySku = eccangApi.getProductBySku(product.getProductSku());
+						if (productBySku != null && productBySku.getMainImg() != null) {
+							ProductPicture productPicture = new ProductPicture();
+							productPicture.setDefaultValue();
+							productPicture.setSku(product.getProductSku());
+							productPicture.setProductId(product.getId());
+							productPicture.setPictureUrl(productBySku.getMainImg());
+							Integer insert = producrtPicMapper.insert(productPicture);
+							if (insert > 0) {
+								product.setMainPictureId(productPicture.getId());
+								product.setUpdateTime(currentTime);
+								productMapper.updateById(product);
+							}
+						}
+					}
+				});
+				try {
+					Thread.sleep(200);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			return productList.size();
+		}
+		return null;
+	}
 
 }

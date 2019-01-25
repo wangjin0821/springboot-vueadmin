@@ -102,4 +102,6 @@ public class Product extends BaseEntity implements Serializable {
 	 * 供应商价格币种币种
 	 */
 	private String spCurrencyCode;
+	
+	private Integer mainPictureId;
 }

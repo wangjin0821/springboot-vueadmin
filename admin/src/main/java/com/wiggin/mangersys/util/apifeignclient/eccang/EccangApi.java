@@ -14,6 +14,7 @@ import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -88,7 +89,12 @@ public class EccangApi {
         Integer code = parseObject.getInteger("code");
         if (new Integer(200).equals(code)) {
             String dataJsonStr = parseObject.getString("data");
-            return BeanUtil.parseObject(dataJsonStr, EcProductResponse.class);
+            log.info("dataJsonStr={}", dataJsonStr);
+            List<EcProductResponse> parseArray = BeanUtil.parseArray(dataJsonStr, EcProductResponse.class);
+            if (CollectionUtils.isNotEmpty(parseArray)) {
+            	return parseArray.get(0);
+            }
+            return null;
         } else {
             String message = parseObject.getString("message");
             throw new BusinessException(ExceptionCodeEnum.SERVICE_ERROR.getCode(), message);

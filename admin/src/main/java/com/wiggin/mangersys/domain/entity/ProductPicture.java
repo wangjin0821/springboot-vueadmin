@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 @TableName("api_product_picture")
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProductPicture implements Serializable {
+public class ProductPicture extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -41,8 +41,8 @@ public class ProductPicture implements Serializable {
      * 图片路径
      */
     private String picturePath;
-    private Date createTime;
-    private Date updateTime;
+    
+    private String pictureUrl;
     /**
      * 图片类型,1主图，2附属图
      */

@@ -65,11 +65,11 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter {
     public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         // 核心线程池数
-        executor.setCorePoolSize(10);
+        executor.setCorePoolSize(20);
         // 最大线程
-        executor.setMaxPoolSize(20);
+        executor.setMaxPoolSize(100);
         // 队列容量
-        executor.setQueueCapacity(10);
+        executor.setQueueCapacity(50);
         // 队列满，线程被拒绝执行策略
         executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
         

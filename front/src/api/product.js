@@ -39,3 +39,17 @@ export function downLoadMix(params) {
     params
   })
 }
+
+export function getSaleStatusList() {
+  return request({
+    url: 'product/getSaleStatusList',
+    method: 'get'
+  })
+}
+
+export function getCategoryList() {
+  return request({
+    url: 'product/getCategoryList',
+    method: 'get'
+  })
+}

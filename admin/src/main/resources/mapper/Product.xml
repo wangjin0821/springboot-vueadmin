@@ -7,24 +7,25 @@
 		designer_id as designerId,person_oprater_id as personOpraterId,person_seller_id as personSellerId,person_develop_id as personDevelopId,
 		procut_category_code1 as procutCategoryCode1,procut_category_name1 as procutCategoryName1,procut_category_code2 as procutCategoryCode2,
 		procut_category_name2 as procutCategoryName2,default_supplier_code as defaultSupplierCode,sp_unit_price as spUnitPrice,sp_currency_code as spCurrencyCode,
-		product_add_time as productAddTime,product_update_time as productUpdateTime,sale_status as saleStatus,create_time as createTime,update_time as updateTime,
-		product_title as productTitle,product_title_en as productTitleEn
+		product_add_time as productAddTime,product_update_time as productUpdateTime,sale_status as saleStatus,p.create_time as createTime,p.update_time as updateTime,
+		product_title as productTitle,product_title_en as productTitleEn,picture_path as picturePath,picture_url as pictureUrl
 		 FROM api_product AS p LEFT JOIN api_product_desc AS d ON p.id = d.product_id
+		 LEFT JOIN api_product_picture pic ON pic.id = p.main_picture_id
 		<where>
-			<if test='reqeustParam.sku != null'>
+			<if test="reqeustParam.sku != null">
 				p.product_sku IN
 				<foreach collection="reqeustParam.sku" item="item" index="index" open="(" separator="," close=")">
-				    '#{reqeustParam.sku}'
+				    #{item}
 			    </foreach>
 			</if>
-			<if test="requestParam.saleStatus != null">
-				p.sale_status = #{requestParam.saleStatus}
+			<if test="reqeustParam.saleStatus != null">
+				p.sale_status = #{reqeustParam.saleStatus}
 			</if>
-			<if test="requestParam.category1 != null">
-				p.procut_category_code1 = #{requestParam.category1}
+			<if test="reqeustParam.category1 != null">
+				p.procut_category_code1 = #{reqeustParam.category1}
 			</if>
-			<if test="requestParam.category2 != null">
-				p.procut_category_code2 = #{requestParam.category2}
+			<if test="reqeustParam.category2 != null">
+				p.procut_category_code2 = #{reqeustParam.category2}
 			</if>
 		</where>
 	</select>

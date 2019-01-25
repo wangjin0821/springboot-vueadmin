@@ -27,7 +27,9 @@ public interface ProductService {
 	
 	Integer syncProductList();
 	
-	List<EcProductCategoryResponse> getProductCategoryList();
+	List<EcProductCategoryResponse> getCategoryList();
 	
 	List<EcProductSaleStatusResponse> getSaleStatusList();
+	
+	Integer syncProductMainImage(String sku);
 }
