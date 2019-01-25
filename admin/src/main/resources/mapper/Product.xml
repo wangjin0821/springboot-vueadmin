@@ -11,8 +11,20 @@
 		product_title as productTitle,product_title_en as productTitleEn
 		 FROM api_product AS p LEFT JOIN api_product_desc AS d ON p.id = d.product_id
 		<where>
-			<if test='reqeustParam.sku != null and reqeustParam.sku != ""'>
-				p.product_sku = #{reqeustParam.sku}
+			<if test='reqeustParam.sku != null'>
+				p.product_sku IN
+				<foreach collection="reqeustParam.sku" item="item" index="index" open="(" separator="," close=")">
+				    '#{reqeustParam.sku}'
+			    </foreach>
+			</if>
+			<if test="requestParam.saleStatus != null">
+				p.sale_status = #{requestParam.saleStatus}
+			</if>
+			<if test="requestParam.category1 != null">
+				p.procut_category_code1 = #{requestParam.category1}
+			</if>
+			<if test="requestParam.category2 != null">
+				p.procut_category_code2 = #{requestParam.category2}
 			</if>
 		</where>
 	</select>

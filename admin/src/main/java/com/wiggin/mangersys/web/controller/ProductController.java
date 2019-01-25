@@ -1,5 +1,6 @@
 package com.wiggin.mangersys.web.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,8 @@ import com.wiggin.mangersys.domain.entity.Product;
 import com.wiggin.mangersys.service.ProductService;
 import com.wiggin.mangersys.util.BeanUtil;
 import com.wiggin.mangersys.util.Page;
+import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductCategoryResponse;
+import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductSaleStatusResponse;
 import com.wiggin.mangersys.util.report.BaseExport;
 import com.wiggin.mangersys.web.vo.request.ProductPageRequest;
 import com.wiggin.mangersys.web.vo.response.ProductPageResponse;
@@ -56,6 +59,18 @@ public class ProductController implements BaseExport {
     @GetMapping("/syncProductList")
     public Integer syncProductList() {
         return productService.syncProductList();
+    }
+
+
+    @GetMapping("/getProductCategoroyList")
+    public List<EcProductCategoryResponse> getProductCategoroyList() {
+        return productService.getProductCategoryList();
+    }
+
+
+    @GetMapping("/getSaleStatusList")
+    public List<EcProductSaleStatusResponse> getSaleStatusList() {
+        return productService.getSaleStatusList();
     }
 
 

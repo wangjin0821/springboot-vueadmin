@@ -1,7 +1,11 @@
 package com.wiggin.mangersys.service;
 
+import java.util.List;
+
 import com.wiggin.mangersys.domain.entity.Product;
 import com.wiggin.mangersys.util.Page;
+import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductCategoryResponse;
+import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductSaleStatusResponse;
 import com.wiggin.mangersys.web.vo.request.ProductPageRequest;
 import com.wiggin.mangersys.web.vo.response.ProductPageResponse;
 
@@ -23,4 +27,7 @@ public interface ProductService {
 	
 	Integer syncProductList();
 	
+	List<EcProductCategoryResponse> getProductCategoryList();
+	
+	List<EcProductSaleStatusResponse> getSaleStatusList();
 }
