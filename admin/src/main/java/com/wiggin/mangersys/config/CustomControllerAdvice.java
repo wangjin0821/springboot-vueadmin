@@ -90,7 +90,7 @@ public class CustomControllerAdvice implements ResponseBodyAdvice<Object> {
     @ExceptionHandler(value = BusinessException.class)
     public GenericResponse myErrorHandler(BusinessException ex) {
         // ex.getException().printStackTrace();
-        log.error(ex.toString());
+        log.error("{}", ex);
         return ResponseFormat.error(ex.getCode(), ex.getMessage());
     }
 

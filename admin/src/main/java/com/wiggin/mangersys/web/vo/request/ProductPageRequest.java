@@ -23,7 +23,7 @@ public class ProductPageRequest {
 	private List<String> sku;
 	
 	@ApiModelProperty("销售状态")
-	private Integer saleStatus;
+	private List<Integer> saleStatus;
 	
 	@ApiModelProperty("一级分类")
 	private Integer category1;

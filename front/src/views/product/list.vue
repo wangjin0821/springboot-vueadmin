@@ -19,10 +19,10 @@
           </el-row> -->
           <div class="filter-container">
             <el-input :placeholder="listQuery.sku.title" v-model="listQuery.sku.value" style="width: 200px;" class="filter-item" @keyup.enter.native="search($event)"/>
-            <el-select v-model="listQuery.saleStatusList.value" :placeholder="listQuery.saleStatusList.title" clearable style="width: 160px" class="filter-item" @change="search($event)">
+            <el-select multiple collapse-tags v-model="listQuery.saleStatusList.value" :placeholder="listQuery.saleStatusList.title" clearable style="width: 200px" class="filter-item">
               <el-option v-for="item in queryParam.saleStatusList" :key="item.pSaleId" :label="item.pSaleName" :value="item.pSaleId"/>
             </el-select>
-            <el-select v-model="listQuery.categoryList.value" :placeholder="listQuery.categoryList.title" clearable class="filter-item" style="width: 160px" @change="search($event)">
+            <el-select v-model="listQuery.categoryList.value" :placeholder="listQuery.categoryList.title" clearable class="filter-item" style="width: 180px">
               <el-option v-for="item in queryParam.categoryList" :key="item.pcId" :label="item.pcName" :value="item.pcId"/>
             </el-select>
             <!-- <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
@@ -30,7 +30,7 @@
             </el-select> -->
             <el-button class="filter-item" type="primary" icon="el-icon-search" @click="search($event)">搜索</el-button>
             <!-- <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">新增</el-button> -->
-            <el-button class="filter-item" type="primary" icon="el-icon-download" @click="exportDialogVisible = true">导出</el-button>
+            <el-button class="filter-item" type="primary" icon="el-icon-download" @click="exportDialogVisible = true">导出SKU</el-button>
             <!-- <el-checkbox v-model="showReviewer" class="filter-item" style="margin-left:15px;" @change="tableKey=tableKey+1">测试</el-checkbox> -->
           </div>
         </div>
@@ -47,9 +47,15 @@
               width="50">
             </el-table-column>
             <el-table-column
-              label="图片" width="76">
+              label="图片" width="100">
               <template slot-scope="scope">
-                <img :src='scope.row.pictureUrl' style="height: 35px;vertical-align: middle;" alt="">
+                <el-popover
+                  placement="right"
+                  title=""
+                  trigger="hover">
+                  <img v-lazy="scope.row.pictureUrl" style="max-height: 300px;"/>
+                  <img slot="reference" v-lazy="scope.row.pictureUrl" :alt="scope.row.productSku" style="max-height: 50px;">
+                </el-popover>
               </template>
             </el-table-column>
             <el-table-column
@@ -155,9 +161,17 @@
           <el-button type="primary" @click="addSave" :loading="saveLoading">保 存</el-button>
         </div>
       </el-dialog>
-      <el-dialog title="导出产品信息" width="25%" :visible.sync="exportDialogVisible">
+      <el-dialog title="导出产品信息" width="50%" :visible.sync="exportDialogVisible">
         <div>
           <el-form ref="exportFromData" :model="exportFromData" :rules="formRules" :label-position="exportFromData.position">
+            <el-form-item label="输入需要导入的SKU(多个换行)">
+              <el-input
+                type="textarea"
+                :rows="7"
+                placeholder="请输入SKU"
+                v-model="exportFromData.skuText">
+              </el-input>
+            </el-form-item>
             <el-form-item label="选择导出字段">
               <el-checkbox v-for="(item) in exportFromData.fields" v-model="item.checked" :label="item.field" :key="item.field">{{ item.label }}</el-checkbox>
             </el-form-item>
@@ -172,7 +186,7 @@
         </div>
         <div slot="footer" class="dialog-footer">
           <el-button @click="exportDialogVisible = false">取 消</el-button>
-          <el-button type="primary" @click="handlExprot" :loading="saveLoading">导 出</el-button>
+          <el-button type="primary" @click="handlExprot" :loading="exportLoading">导 出</el-button>
         </div>
       </el-dialog>
   </div>
@@ -200,6 +214,7 @@ export default {
       saveLoading: false,
       listLoading: false,
       exportDialogVisible: false,
+      exportLoading: false,
       defaultProps: {
         children: 'children',
         label: 'name',
@@ -216,7 +231,7 @@ export default {
         },
         saleStatusList: {
           title: '销售状态',
-          value: ''
+          value: []
         },
         categoryList: {
           title: '产品分类',
@@ -246,7 +261,10 @@ export default {
         position: 'top',
         checkAll: false,
         isIndeterminate: true,
+        skuText: '',
         fields: [
+          { field: 'pictureUrl', checked: true, label: '图片地址' },
+          { field: 'pictureData', checked: false, label: '图片' },
           { field: 'productSku', checked: true, label: 'SKU' },
           { field: 'productTitle', checked: true, label: '名称' },
           { field: 'productWeight', checked: true, label: '重量' },
@@ -313,7 +331,16 @@ export default {
       this.loadData()
     },
     handlExprot() {
-      // console.log(this.exportFromData)
+      const trimSkuText = this.exportFromData.skuText.trim()
+      if (trimSkuText === '') {
+        this.$message.error('请输入需要导出的SKU列表')
+        return
+      }
+      const skuList = trimSkuText.split('\n')
+      if (skuList.length <= 0) {
+        this.$message.error('请输入需要导出的SKU列表')
+        return
+      }
       const exportFileList = []
       this.exportFromData.fields.forEach(element => {
         if (element.checked) {
@@ -337,10 +364,13 @@ export default {
           break
       }
       const listStr = JSON.stringify(exportFileList)
-      // { list: listStr, async: 'false', parameter: '{"sku": "A301020101"}' }
-      downLoadMix({ list: listStr, async: 'false', fileType: fileType }).then(res => {
+      const parameterStr = JSON.stringify({ sku: skuList })
+      this.exportLoading = true
+      downLoadMix({ list: listStr, async: 'false', fileType: fileType, parameter: parameterStr }).then(res => {
         this.$message('下载成功')
+        this.exportLoading = false
       }, reject => {
+        this.exportLoading = false
         this.$message.error(reject)
       })
     },
@@ -398,7 +428,7 @@ export default {
       if (this.listQuery.sku.value !== '') {
         params.sku = [this.listQuery.sku.value]
       }
-      if (this.listQuery.saleStatusList.value !== '') {
+      if (this.listQuery.saleStatusList.value !== '' && this.listQuery.saleStatusList.value.length > 0) {
         params.saleStatus = this.listQuery.saleStatusList.value
       }
       getList(params).then(res => {

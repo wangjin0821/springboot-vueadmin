@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import VueLazyload from 'vue-lazyload'
 
 import 'normalize.css/normalize.css'// A modern alternative to CSS resets
 
@@ -16,6 +17,12 @@ import '@/icons' // icon
 import '@/permission' // permission control
 
 Vue.use(ElementUI, { locale })
+Vue.use(VueLazyload, {
+  preLoad: 1.3,
+  error: 'static/noimg.jpg',
+  loading: 'static/loading.gif',
+  attempt: 1
+})
 
 Vue.config.productionTip = false
 

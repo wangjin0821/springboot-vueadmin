@@ -3,6 +3,9 @@ package com.wiggin.mangersys.util.report.annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.function.Function;
+
+import com.alibaba.druid.util.lang.Consumer;
 
 
 /**
@@ -53,4 +56,11 @@ public @interface ImportAndExportDataConversion {
      * @return
      */
     String value() default "";
+    
+    
+    /**
+     * 要转换数据的转换接口
+     * @return
+     */
+    boolean specialDataConvert() default false;
 }

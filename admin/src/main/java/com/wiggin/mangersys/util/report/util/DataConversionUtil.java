@@ -56,12 +56,19 @@ public class DataConversionUtil {
                 ImportAndExportDataConversion formatterType = field.getAnnotation(ImportAndExportDataConversion.class);
                 Map<String, String> map = Maps.newHashMap();
                 conversionClass = formatterType.conversionClass();
+                boolean specialDataConvert = formatterType.specialDataConvert();
 //                String dicType = formatterType.dicType();
 
                 /*
                  * 如果conversionClass不为空则取conversionClass的数据 如果为空则取dicType字典类型的数据
                  */
-                if (!StringUtils.equals(conversionClass.getName(), "java.lang.Class")) {
+                if (specialDataConvert && !StringUtils.equals(conversionClass.getName(), "java.lang.Class")) {
+                	//fieldType.put(field.getName(), dataConvertToType);
+                	map.put("specialDataConvert", conversionClass.getName());
+                	fTypeMap.put(field.getName(), map);
+                    fieldType.put(field.getName(), "specialDataConvert");
+                    continue;
+                } else if (!StringUtils.equals(conversionClass.getName(), "java.lang.Class")) {
                     m = conversionClass.getMethod("values");
                     BaseEnum baseEnums[] = (BaseEnum[]) m.invoke(null);
 

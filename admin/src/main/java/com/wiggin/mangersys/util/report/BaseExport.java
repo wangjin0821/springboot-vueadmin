@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -42,7 +43,7 @@ import com.wiggin.mangersys.util.BeanUtil;
 import com.wiggin.mangersys.util.Page;
 import com.wiggin.mangersys.util.SpringUtil;
 import com.wiggin.mangersys.util.report.util.DataConversionUtil;
-import com.wiggin.mangersys.util.report.util.GenerateMyFileData;
+import com.wiggin.mangersys.util.report.util.DataConvert;
 import com.wiggin.mangersys.util.report.vo.BaseExportVO;
 import com.wiggin.mangersys.util.report.vo.ExportVO;
 
@@ -89,45 +90,53 @@ public interface BaseExport {
             baseExportVO.setFileType(FileTypeEnum.XLSX.getCode());
         }
 
-        //Long companyId = null;
+        // Long companyId = null;
 
-        /*if (baseExportVO.getCompanyId() != null) {
-            WorkbenchEmployeeService workbenchEmployeeService = SpringUtil.getContext().getBean(WorkbenchEmployeeService.class);
-            if (workbenchEmployeeService.getUserCompanyIdIsExist(SessionUtil.getUserId(), baseExportVO.getCompanyId(), token) <= 0) {
-                throw new ServiceException(SysRespCodeEnum.PARAMS_ERR.code, "用户不属于该公司");
-            }
+        /*
+         * if (baseExportVO.getCompanyId() != null) { WorkbenchEmployeeService
+         * workbenchEmployeeService =
+         * SpringUtil.getContext().getBean(WorkbenchEmployeeService.class); if
+         * (workbenchEmployeeService.getUserCompanyIdIsExist(SessionUtil.
+         * getUserId(), baseExportVO.getCompanyId(), token) <= 0) { throw new
+         * ServiceException(SysRespCodeEnum.PARAMS_ERR.code, "用户不属于该公司"); }
+         * 
+         * companyId = baseExportVO.getCompanyId(); } else if
+         * (StringUtil.isNotBlank(SessionUtil.getCompanyId())) { companyId =
+         * Long.valueOf(SessionUtil.getCompanyId()); }
+         */
 
-            companyId = baseExportVO.getCompanyId();
-        } else if (StringUtil.isNotBlank(SessionUtil.getCompanyId())) {
-            companyId = Long.valueOf(SessionUtil.getCompanyId());
-        }*/
-
-        if (baseExportVO.isAsync()) {
-            //TODO wiggin
-            /*if (baseExportVO.getSystemId() == null) {
-                throw new ServiceException(SysRespCodeEnum.PARAMS_ERR.code, "异步导出系统ID不能为空!");
-            }*/
-            
-            GenerateMyFileData generateMyFileData = SpringUtil.getContext().getBean(GenerateMyFileData.class);
-            Long fileId = null;
-            //Long fileId = generateMyFileData.insertWorkbenchMyFile(baseExportVO, companyId, token);
-
-            if (fileId == null) {
-//                throw new ServiceException(SysRespCodeEnum.PARAMS_ERR.code, "我的下载生成数据失败!");
-            }
-
-            /*AsyncTask asyncTask = SpringUtil.getContext().getBean(AsyncTask.class);
-//            UserInfo userInfo = SessionUtil.currentUser();
-            asyncTask.myTaskAsyncPool(fileId, baseExportVO, this.getClass(), userInfo, token);*/
-
-            return;
-        }
+        /*
+         * if (baseExportVO.isAsync()) { // TODO wiggin
+         * 
+         * if (baseExportVO.getSystemId() == null) { throw new
+         * ServiceException(SysRespCodeEnum.PARAMS_ERR.code, "异步导出系统ID不能为空!"); }
+         * 
+         * 
+         * GenerateMyFileData generateMyFileData =
+         * SpringUtil.getContext().getBean(GenerateMyFileData.class); Long
+         * fileId = null; // Long fileId = //
+         * generateMyFileData.insertWorkbenchMyFile(baseExportVO, companyId, //
+         * token);
+         * 
+         * if (fileId == null) { // throw new
+         * ServiceException(SysRespCodeEnum.PARAMS_ERR.code, // "我的下载生成数据失败!");
+         * }
+         * 
+         * AsyncTask asyncTask =
+         * SpringUtil.getContext().getBean(AsyncTask.class); // UserInfo
+         * userInfo = SessionUtil.currentUser();
+         * asyncTask.myTaskAsyncPool(fileId, baseExportVO, this.getClass(),
+         * userInfo, token);
+         * 
+         * 
+         * return; }
+         */
         HttpServletResponse response = servletRequestAttributes.getResponse();
 
         File file = getExportFile(baseExportVO, token);
 
         setResponseHeader(response, file.getName());
-//        ResponseUtil.setResponseHeader(response, file.getName());
+        // ResponseUtil.setResponseHeader(response, file.getName());
         try (InputStream is = new FileInputStream(file); OutputStream outputStream = new BufferedOutputStream(response.getOutputStream());) {
             byte[] buffer = new byte[is.available()];
             int len = is.read(buffer);
@@ -199,7 +208,8 @@ public interface BaseExport {
                 BigDecimal pageSize = new BigDecimal(PAGE_SIZE);
                 BigDecimal pageNumber1 = pageTotal.divide(pageSize, 6, BigDecimal.ROUND_FLOOR);
                 int pageNumber = (int) Math.ceil(pageNumber1.doubleValue());
-//                int pageNumber = PageUtil.getPageNumber(page.getTotalCount(), PAGE_SIZE);
+                // int pageNumber = PageUtil.getPageNumber(page.getTotalCount(),
+                // PAGE_SIZE);
                 pagination.setSize(PAGE_SIZE);
 
                 int j = 0;
@@ -296,25 +306,35 @@ public interface BaseExport {
                         value = formatterType.get(String.valueOf(value));
                     } else if (value instanceof Boolean && formatterType.get((boolean) value ? "1" : "0") != null) {
                         value = formatterType.get((boolean) value ? "1" : "0");
+                    } else if (formatterType.get("specialDataConvert") != null) {
+                        Class<?> loadClass = this.getClass().getClassLoader().loadClass(formatterType.get("specialDataConvert"));
+                        Object newInstance = loadClass.newInstance();
+                        if (newInstance instanceof DataConvert) {
+                            Method convert = loadClass.getMethod("convert", String.class);
+                            byte[] result = (byte[]) convert.invoke(newInstance, value);
+                            if (result != null) {
+                                map.put(String.valueOf(key), result);
+                            } else {
+                                map.put(String.valueOf(key), "");
+                            }
+                            continue;
+                        }
                     }
                 }
 
                 if (value != null && value != "") {
                     String type = value.getClass().getName();
-
                     switch (type) {
                     case "java.util.Date":
                         if (StringUtils.isNotBlank(dateType)) {
                             bf = new SimpleDateFormat(dateType);
                         }
-
                         value = bf.format(value);
                         break;
 
                     case "java.math.BigDecimal":
                         BigDecimal b = new BigDecimal(String.valueOf(value));
                         value = b.setScale(2, BigDecimal.ROUND_HALF_DOWN);
-
                         break;
                     }
                 }
@@ -350,8 +370,8 @@ public interface BaseExport {
     default Map<String, Object> filterData(Map<String, Object> map) {
         return map;
     }
-    
-    
+
+
     /**
      * 设置下载response 格式
      * 
@@ -361,8 +381,11 @@ public interface BaseExport {
      */
     default public void setResponseHeader(HttpServletResponse response, String fileName) throws UnsupportedEncodingException {
         fileName = new String(fileName.getBytes(), "ISO8859-1");
-        
-        response.setHeader("Access-Control-Expose-Headers", "Content-Disposition,Ajax-Download,Ajax-Download-File");
+
+        response.setHeader("Access-Control-Expose-Headers", "Content-Disposition,Ajax-Download,Ajax-Download-File"); // vue的ajax请求的时候
+                                                                                                                     // 默认只能接到
+                                                                                                                     // ContentType
+                                                                                                                     // 等部分头部信息
         response.setContentType("application/octet-stream;charset=ISO8859-1");
         response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
         response.setHeader("Ajax-Download", "true");
