@@ -54,7 +54,7 @@
                   title=""
                   trigger="hover">
                   <img v-lazy="scope.row.pictureUrl" style="max-height: 300px;"/>
-                  <img slot="reference" v-lazy="scope.row.pictureUrl" :alt="scope.row.productSku" style="max-height: 50px;">
+                  <img slot="reference" v-lazy="scope.row.pictureUrl" :key="scope.row.pictureUrl" :alt="scope.row.productSku" style="max-height: 50px;">
                 </el-popover>
               </template>
             </el-table-column>
