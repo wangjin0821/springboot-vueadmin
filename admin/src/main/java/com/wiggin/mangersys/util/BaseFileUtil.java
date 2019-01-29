@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -252,7 +251,7 @@ public class BaseFileUtil {
      * 
      * @param dir
      */
-    public static void listDirectory(File dir, Collection<String> filePathList) {
+    public static void listDirectory(File dir, Map<String, List<File>> filePathList) {
         if (!dir.exists()) {
             throw new IllegalArgumentException("目录" + dir + "不存在！");
         }
@@ -275,28 +274,8 @@ public class BaseFileUtil {
                 }
             }
             if (isAllFiles) {
-                filePathList.add(dir.getAbsolutePath());
+                filePathList.putIfAbsent(dir.getName(), Lists.newArrayList(files));
             }
         }
-    }
-
-
-    public static void main(String[] args) {
-        File dir = new File("E:\\picture");
-        List<String> fileList = Lists.newLinkedList();
-        BaseFileUtil.listDirectory(dir, fileList);
-        log.info("size => {}, list => {}", fileList.size(), fileList);
-        /*FileFilter filter = new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                return file.isFile() && "png".equals(file.getName().substring(file.getName().lastIndexOf(".") + 1));
-            }
-        };
-        BaseFileUtil.dirMap.forEach((filePath, dir) -> {
-            if (StringUtils.lastIndexOf(filePath, "UserInfo") > 0) {
-                File[] listFiles = dir.listFiles(filter);
-                log.info("listFiles => {}, {}", listFiles.length, JSON.toJSONString(listFiles));
-            }
-        });*/
     }
 }

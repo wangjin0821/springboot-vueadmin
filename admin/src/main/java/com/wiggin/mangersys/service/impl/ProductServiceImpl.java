@@ -1,5 +1,7 @@
 package com.wiggin.mangersys.service.impl;
 
+import java.io.File;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +15,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.baomidou.mybatisplus.plugins.pagination.Pagination;
@@ -26,6 +30,7 @@ import com.wiggin.mangersys.domain.mapper.ProductDescMapper;
 import com.wiggin.mangersys.domain.mapper.ProductMapper;
 import com.wiggin.mangersys.domain.mapper.ProductPictureMapper;
 import com.wiggin.mangersys.service.ProductService;
+import com.wiggin.mangersys.util.BaseFileUtil;
 import com.wiggin.mangersys.util.DateUtil;
 import com.wiggin.mangersys.util.Page;
 import com.wiggin.mangersys.util.apifeignclient.eccang.EccangApi;
@@ -66,26 +71,26 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
-    
+
     @Autowired
     private ProductPictureMapper producrtPicMapper;
 
 
     @Override
     public Page<ProductPageResponse> getProductList(ProductPageRequest productReq) {
-    	log.info("productReq=>{}", productReq);
+        log.info("productReq=>{}", productReq);
         Pagination pagination = productReq.getPagination();
         List<ProductPageResponse> selectPage = productMapper.selectProductPage(pagination, productReq);
         if (CollectionUtils.isNotEmpty(selectPage)) {
-        	List<EcProductSaleStatusResponse> salesStatusList = getSaleStatusList();
-        	Map<Integer, EcProductSaleStatusResponse> salesStatusMap = Maps.uniqueIndex(salesStatusList, EcProductSaleStatusResponse::getPSaleId);
-        	selectPage.forEach(item -> {
-        		if (salesStatusMap.containsKey(item.getSaleStatus())) {
-        			item.setSaleStatusText(salesStatusMap.get(item.getSaleStatus()).getPSaleName());
-        		}
-        	}); 
+            List<EcProductSaleStatusResponse> salesStatusList = getSaleStatusList();
+            Map<Integer, EcProductSaleStatusResponse> salesStatusMap = Maps.uniqueIndex(salesStatusList, EcProductSaleStatusResponse::getPSaleId);
+            selectPage.forEach(item -> {
+                if (salesStatusMap.containsKey(item.getSaleStatus())) {
+                    item.setSaleStatusText(salesStatusMap.get(item.getSaleStatus()).getPSaleName());
+                }
+            });
         }
-       
+
         log.info("getProductList => {}", selectPage);
         return new Page<>(pagination.getTotal(), pagination.getPages(), selectPage);
     }
@@ -248,53 +253,102 @@ public class ProductServiceImpl implements ProductService {
     }
 
 
-	@Override
-	public Integer syncProductMainImage(String sku) {
-		List<Product> productList = Lists.newLinkedList();
-		if (StringUtils.isNotEmpty(sku)) {
-			Product product = new Product();
-			product.setProductSku(sku);
-			Product selectOne = productMapper.selectOne(product);
-			if (selectOne != null) {
-				productList.add(selectOne);
-			}
-		}
-		EntityWrapper<Product> entityWrapper = new EntityWrapper<>();
-		entityWrapper.eq("main_picture_id", 0);
-		entityWrapper.orderBy("id");
-		productList = productMapper.selectList(entityWrapper);
-		log.info("productList.size => {}", productList.size());
-		if (CollectionUtils.isNotEmpty(productList)) {
-			Date currentTime = DateUtil.currentTime();
-			for (Product product : productList) {
-				threadPoolTaskExecutor.execute(new Runnable() {
-					@Override
-					public void run() {
-						EcProductResponse productBySku = eccangApi.getProductBySku(product.getProductSku());
-						if (productBySku != null && productBySku.getMainImg() != null) {
-							ProductPicture productPicture = new ProductPicture();
-							productPicture.setDefaultValue();
-							productPicture.setSku(product.getProductSku());
-							productPicture.setProductId(product.getId());
-							productPicture.setPictureUrl(productBySku.getMainImg());
-							Integer insert = producrtPicMapper.insert(productPicture);
-							if (insert > 0) {
-								product.setMainPictureId(productPicture.getId());
-								product.setUpdateTime(currentTime);
-								productMapper.updateById(product);
-							}
-						}
-					}
-				});
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			return productList.size();
-		}
-		return null;
-	}
+    @Override
+    public Integer syncProductMainImage(String sku) {
+        List<Product> productList = Lists.newLinkedList();
+        if (StringUtils.isNotEmpty(sku)) {
+            Product product = new Product();
+            product.setProductSku(sku);
+            Product selectOne = productMapper.selectOne(product);
+            if (selectOne != null) {
+                productList.add(selectOne);
+            }
+        }
+        EntityWrapper<Product> entityWrapper = new EntityWrapper<>();
+        entityWrapper.eq("main_picture_id", 0);
+        entityWrapper.orderBy("id");
+        productList = productMapper.selectList(entityWrapper);
+        log.info("productList.size => {}", productList.size());
+        if (CollectionUtils.isNotEmpty(productList)) {
+            Date currentTime = DateUtil.currentTime();
+            for (Product product : productList) {
+                threadPoolTaskExecutor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        EcProductResponse productBySku = eccangApi.getProductBySku(product.getProductSku());
+                        if (productBySku != null && productBySku.getMainImg() != null) {
+                            ProductPicture productPicture = new ProductPicture();
+                            productPicture.setDefaultValue();
+                            productPicture.setSku(product.getProductSku());
+                            productPicture.setProductId(product.getId());
+                            productPicture.setPictureUrl(productBySku.getMainImg());
+                            Integer insert = producrtPicMapper.insert(productPicture);
+                            if (insert > 0) {
+                                product.setMainPictureId(productPicture.getId());
+                                product.setUpdateTime(currentTime);
+                                productMapper.updateById(product);
+                            }
+                        }
+                    }
+                });
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            return productList.size();
+        }
+        return null;
+    }
+
+
+    @Override
+    @Transactional
+    public Integer parseProductLocalImage() {
+        Map<String, List<File>> filePathMap = Maps.newConcurrentMap();
+        File dir = new File("D:\\phpStudy");
+        BaseFileUtil.listDirectory(dir, filePathMap);
+        if (filePathMap.isEmpty()) {
+            return 0;
+        }
+        // log.info("filePathList=>{}", filePathList);
+        Product productEntity = new Product();
+        productEntity.setIsParse(0);
+        Wrapper<Product> wrapper = new EntityWrapper<>(productEntity);
+        List<Product> productList = productMapper.selectList(wrapper);
+        for (Product product : productList) {
+            String[] split = StringUtils.split(product.getProductSku(), "-");
+            if (split[0] != null) {
+                String[] split2 = StringUtils.split(split[0], ".");
+                if (split2[0] != null && filePathMap.containsKey(split2[0])) {
+                    List<File> fileList = filePathMap.get(split2[0]);
+                    List<ProductPicture> productPictureList = Lists.newArrayList();
+                    fileList.forEach(file -> {
+                        ProductPicture productPicture = new ProductPicture();
+                        productPicture.setProductId(product.getId());
+                        productPicture.setSku(product.getProductSku());
+                        productPicture.setDefaultValue();
+                        productPicture.setPicturePath(file.getPath());
+                        productPictureList.add(productPicture);
+                    });
+                    product.setIsParse(1);
+                    product.setParseTime(DateUtil.currentTime());
+                    productMapper.updateById(product);
+                    productPictureList.forEach(productPic -> {
+                        producrtPicMapper.insert(productPic);
+                    });
+                } else {
+                    product.setIsParse(2);
+                    product.setParseTime(DateUtil.currentTime());
+                    productMapper.updateById(product);
+                }
+            } else {
+                log.error("sku=>{} split error", product.getProductSku());
+            }
+        }
+
+        return productList.size();
+    }
 
 }

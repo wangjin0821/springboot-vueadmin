@@ -32,4 +32,6 @@ public interface ProductService {
 	List<EcProductSaleStatusResponse> getSaleStatusList();
 	
 	Integer syncProductMainImage(String sku);
+	
+	Integer parseProductLocalImage();
 }

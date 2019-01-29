@@ -72,10 +72,17 @@ public class ProductController implements BaseExport {
     public List<EcProductSaleStatusResponse> getSaleStatusList() {
         return productService.getSaleStatusList();
     }
-    
+
+
     @GetMapping("/syncProductMainImage")
     public Integer syncProductMainImage(@RequestParam(name = "sku", required = false) String sku) {
-    	return productService.syncProductMainImage(sku);
+        return productService.syncProductMainImage(sku);
+    }
+
+
+    @GetMapping("/parseProductLocalImage")
+    public Integer parseProductLocalImage() {
+        return productService.parseProductLocalImage();
     }
 
 

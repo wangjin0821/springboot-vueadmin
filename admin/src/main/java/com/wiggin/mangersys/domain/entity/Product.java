@@ -104,4 +104,8 @@ public class Product extends BaseEntity implements Serializable {
 	private String spCurrencyCode;
 	
 	private Integer mainPictureId;
+	
+	
+	private Integer isParse;
+	private Date parseTime;
 }
