@@ -29,6 +29,7 @@ import com.wiggin.mangersys.domain.entity.ProductPicture;
 import com.wiggin.mangersys.domain.mapper.ProductDescMapper;
 import com.wiggin.mangersys.domain.mapper.ProductMapper;
 import com.wiggin.mangersys.domain.mapper.ProductPictureMapper;
+import com.wiggin.mangersys.service.ProductPictureService;
 import com.wiggin.mangersys.service.ProductService;
 import com.wiggin.mangersys.util.BaseFileUtil;
 import com.wiggin.mangersys.util.DateUtil;
@@ -74,6 +75,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductPictureMapper producrtPicMapper;
+    
+    @Autowired
+    private ProductPictureService productPicService;
 
 
     @Override
