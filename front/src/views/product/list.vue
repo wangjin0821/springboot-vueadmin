@@ -32,6 +32,8 @@
             <!-- <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">新增</el-button> -->
             <el-button class="filter-item" type="primary" icon="el-icon-download" @click="exportDialogVisible = true">导出SKU</el-button>
             <!-- <el-checkbox v-model="showReviewer" class="filter-item" style="margin-left:15px;" @change="tableKey=tableKey+1">测试</el-checkbox> -->
+            <el-button class="filter-item" type="primary" icon="el-icon-refresh" @click="syncProductList()">同步产品</el-button>
+            <el-button class="filter-item" type="primary" icon="el-icon-refresh" @click="parseProductLocalImage()">解析产品图片</el-button>
           </div>
         </div>
         <div slot="body" v-loading="listLoading">
@@ -217,7 +219,7 @@
 
 <script>
 import panel from '@/components/Panel'
-import { getList, deleted, update, add, downLoadMix, getSaleStatusList, getCategoryList, getProductPic, saveProductPic } from '@/api/product'
+import { getList, deleted, update, add, downLoadMix, getSaleStatusList, getCategoryList, getProductPic, saveProductPic, syncProductList, parseProductLocalImage } from '@/api/product'
 
 export default {
   components: {
@@ -492,6 +494,12 @@ export default {
         this.listLoading = false
         this.$message.error(error)
       })
+    },
+    syncProductList() {
+      syncProductList()
+    },
+    parseProductLocalImage() {
+      parseProductLocalImage()
     }
   },
   created() {

@@ -69,3 +69,17 @@ export function saveProductPic(params) {
     data: params
   })
 }
+
+export function syncProductList() {
+  return request({
+    url: 'product/syncProductList',
+    method: 'get'
+  })
+}
+
+export function parseProductLocalImage() {
+  return request({
+    url: 'product/parseProductLocalImage',
+    method: 'get'
+  })
+}
