@@ -53,3 +53,19 @@ export function getCategoryList() {
     method: 'get'
   })
 }
+
+export function getProductPic(params) {
+  return request({
+    url: 'product/getProductPic',
+    method: 'get',
+    params
+  })
+}
+
+export function saveProductPic(params) {
+  return request({
+    url: 'product/saveProductPic',
+    method: 'post',
+    data: params
+  })
+}

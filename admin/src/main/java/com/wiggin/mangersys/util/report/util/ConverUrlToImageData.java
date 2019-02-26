@@ -27,6 +27,7 @@ public class ConverUrlToImageData implements DataConvert {
              * e); }
              */
             try {
+                log.info("source=>{}", source);
                 URL url = new URL(source);
                 try {
                     HttpURLConnection openConnection = (HttpURLConnection) url.openConnection();
@@ -54,5 +55,4 @@ public class ConverUrlToImageData implements DataConvert {
         }
         return null;
     }
-
 }

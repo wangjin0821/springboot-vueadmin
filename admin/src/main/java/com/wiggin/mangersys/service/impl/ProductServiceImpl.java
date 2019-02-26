@@ -75,7 +75,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductPictureMapper producrtPicMapper;
-    
+
     @Autowired
     private ProductPictureService productPicService;
 
@@ -89,6 +89,8 @@ public class ProductServiceImpl implements ProductService {
             List<EcProductSaleStatusResponse> salesStatusList = getSaleStatusList();
             Map<Integer, EcProductSaleStatusResponse> salesStatusMap = Maps.uniqueIndex(salesStatusList, EcProductSaleStatusResponse::getPSaleId);
             selectPage.forEach(item -> {
+                item.setPictureUrl("http://localhost:8088" + item.getPicturePath());
+                item.setPictureData("http://localhost:8088" + item.getPicturePath());
                 if (salesStatusMap.containsKey(item.getSaleStatus())) {
                     item.setSaleStatusText(salesStatusMap.get(item.getSaleStatus()).getPSaleName());
                 }
@@ -308,14 +310,15 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
-    @Transactional
+    //@Transactional
     public Integer parseProductLocalImage() {
         Map<String, List<File>> filePathMap = Maps.newConcurrentMap();
-        File dir = new File("D:\\phpStudy");
+        File dir = new File("E:\\picture");
         BaseFileUtil.listDirectory(dir, filePathMap);
         if (filePathMap.isEmpty()) {
             return 0;
         }
+        List<String> imageTypeList = Lists.newArrayList("jpg", "png", "bmp", "gif", "jpeg");
         // log.info("filePathList=>{}", filePathList);
         Product productEntity = new Product();
         productEntity.setIsParse(0);
@@ -329,12 +332,19 @@ public class ProductServiceImpl implements ProductService {
                     List<File> fileList = filePathMap.get(split2[0]);
                     List<ProductPicture> productPictureList = Lists.newArrayList();
                     fileList.forEach(file -> {
-                        ProductPicture productPicture = new ProductPicture();
-                        productPicture.setProductId(product.getId());
-                        productPicture.setSku(product.getProductSku());
-                        productPicture.setDefaultValue();
-                        productPicture.setPicturePath(file.getPath());
-                        productPictureList.add(productPicture);
+                        String fileName = file.getName();
+                        String suffix = fileName.substring(fileName.lastIndexOf(".") + 1);
+                        if (imageTypeList.contains(suffix)) {
+                            String path = file.getPath();
+                            String replacePath = StringUtils.replace(path, "E:\\picture", "");
+                            replacePath =  replacePath.replace("\\", "/");
+                            ProductPicture productPicture = new ProductPicture();
+                            productPicture.setProductId(product.getId());
+                            productPicture.setSku(product.getProductSku());
+                            productPicture.setDefaultValue();
+                            productPicture.setPicturePath(replacePath);
+                            productPictureList.add(productPicture);
+                        }
                     });
                     product.setIsParse(1);
                     product.setParseTime(DateUtil.currentTime());
@@ -353,6 +363,12 @@ public class ProductServiceImpl implements ProductService {
         }
 
         return productList.size();
+    }
+
+
+    @Override
+    public Integer updateProduct(Product product) {
+        return productMapper.updateById(product);
     }
 
 }

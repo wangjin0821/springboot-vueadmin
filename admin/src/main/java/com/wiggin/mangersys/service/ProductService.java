@@ -34,4 +34,6 @@ public interface ProductService {
 	Integer syncProductMainImage(String sku);
 	
 	Integer parseProductLocalImage();
+	
+	Integer updateProduct(Product product);
 }

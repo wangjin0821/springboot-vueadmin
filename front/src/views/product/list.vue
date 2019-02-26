@@ -53,8 +53,8 @@
                   placement="right"
                   title=""
                   trigger="hover">
+                  <img @click="handleSetPic(scope.$index, scope.row)" slot="reference" v-lazy="scope.row.pictureUrl" :key="scope.row.pictureUrl" alt="设置SKU主图" style="max-height: 50px;cursor:pointer;">
                   <img v-lazy="scope.row.pictureUrl" style="max-height: 300px;"/>
-                  <img slot="reference" v-lazy="scope.row.pictureUrl" :key="scope.row.pictureUrl" :alt="scope.row.productSku" style="max-height: 50px;">
                 </el-popover>
               </template>
             </el-table-column>
@@ -189,12 +189,35 @@
           <el-button type="primary" @click="handlExprot" :loading="exportLoading">导 出</el-button>
         </div>
       </el-dialog>
+      <el-dialog title="设置主图" :visible.sync="picDialog" width="50%">
+        <div style="height:450px;overflow:auto;">
+          <el-form ref="picFormData" :model="picFormData" :rules="formRules" label-width="120px">
+            <el-row>
+              <el-col :span="8" v-for="(item, index) in picDialogData" :key="index">
+                <el-card :body-style="{ padding: '0px' }">
+                  <img height="200" :src="item.pictureUrl" class="image" :for="item.id">
+                  <div style="padding: 14px;">
+                    <div class="bottom clearfix">
+                      <el-radio v-model="picFormData.picId" :label="item.id" :id="item.id"></el-radio>
+                    </div>
+                  </div>
+                </el-card>
+              </el-col>
+            </el-row>
+            
+          </el-form>
+        </div>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="picDialog = false">取 消</el-button>
+          <el-button type="primary" @click="picDataSave" :loading="picSaveLoading">保 存</el-button>
+        </div>
+      </el-dialog>
   </div>
 </template>
 
 <script>
 import panel from '@/components/Panel'
-import { getList, deleted, update, add, downLoadMix, getSaleStatusList, getCategoryList } from '@/api/product'
+import { getList, deleted, update, add, downLoadMix, getSaleStatusList, getCategoryList, getProductPic, saveProductPic } from '@/api/product'
 
 export default {
   components: {
@@ -210,8 +233,10 @@ export default {
     }*/
     return {
       currentRow: {},
+      picDialog: false,
       formVisible: false,
       saveLoading: false,
+      picSaveLoading: false,
       listLoading: false,
       exportDialogVisible: false,
       exportLoading: false,
@@ -257,6 +282,11 @@ export default {
         skuLink: '',
         salesVolume: 0
       },
+      picFormData: {
+        productId: 0,
+        picId: 0
+      },
+      picDialogData: [],
       exportFromData: {
         position: 'top',
         checkAll: false,
@@ -387,6 +417,16 @@ export default {
       }
       this.formVisible = true
     },
+    handleSetPic(index, row) {
+      getProductPic({ productId: row.id }).then(res => {
+        this.picDialog = true
+        this.picFormData.picId = row.mainPictureId
+        this.picFormData.productId = row.id
+        this.picDialogData = res.data
+      }).catch(error => {
+        this.$message.error(error)
+      })
+    },
     handleEdit(index, row) {
       this.formVisible = true
       this.formData = { ...row }
@@ -402,6 +442,18 @@ export default {
         this.$message(res.message)
         this.loadData()
       }).catch(error => {
+        this.$message.error(error)
+      })
+    },
+    picDataSave() {
+      this.picSaveLoading = true
+      saveProductPic(this.picFormData).then(res => {
+        this.$message(res.message)
+        this.picSaveLoading = false
+        this.picDialog = false
+        this.loadData()
+      }).catch(error => {
+        this.picSaveLoading = false
         this.$message.error(error)
       })
     },

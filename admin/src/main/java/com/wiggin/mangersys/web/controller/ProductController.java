@@ -3,6 +3,7 @@ package com.wiggin.mangersys.web.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,7 +12,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.wiggin.mangersys.domain.entity.Product;
+import com.wiggin.mangersys.domain.entity.ProductPicture;
+import com.wiggin.mangersys.service.ProductPictureService;
 import com.wiggin.mangersys.service.ProductService;
 import com.wiggin.mangersys.util.BeanUtil;
 import com.wiggin.mangersys.util.Page;
@@ -19,6 +24,7 @@ import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductCategoryRes
 import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductSaleStatusResponse;
 import com.wiggin.mangersys.util.report.BaseExport;
 import com.wiggin.mangersys.web.vo.request.ProductPageRequest;
+import com.wiggin.mangersys.web.vo.request.ProductPicSaveRequest;
 import com.wiggin.mangersys.web.vo.response.ProductPageResponse;
 
 
@@ -36,6 +42,9 @@ public class ProductController implements BaseExport {
 
     @Autowired
     private ProductService productService;
+    
+    @Autowired
+    private ProductPictureService productPicService;
 
 
     @PostMapping("/list")
@@ -90,5 +99,29 @@ public class ProductController implements BaseExport {
     public Page<?> getExportList(Map<String, Object> parameter) {
         ProductPageRequest productReq = BeanUtil.deepCopy(parameter, ProductPageRequest.class);
         return getProductList(productReq);
+    }
+    
+    
+    @GetMapping("/getProductPic")
+    public List<ProductPicture> getProductPic(@RequestParam("productId") Integer productId) {
+        ProductPicture productPicture = new ProductPicture();
+        productPicture.setProductId(productId);
+        Wrapper<ProductPicture> wrapper = new EntityWrapper<>(productPicture);
+        List<ProductPicture> selectList = productPicService.selectList(wrapper);
+        if (CollectionUtils.isNotEmpty(selectList)) {
+            for (ProductPicture productPicture2 : selectList) {
+                productPicture2.setPictureUrl("http://localhost:8088" + productPicture2.getPicturePath());
+            }
+        }
+        return selectList;
+    }
+    
+    
+    @PostMapping("/saveProductPic")
+    public Integer saveProductPic(@RequestBody ProductPicSaveRequest request) {
+        Product product = new Product();
+        product.setId(request.getProductId());
+        product.setMainPictureId(request.getPicId());
+        return productService.updateProduct(product);
     }
 }

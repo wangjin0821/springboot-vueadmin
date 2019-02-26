@@ -8,7 +8,7 @@
 		procut_category_code1 as procutCategoryCode1,procut_category_name1 as procutCategoryName1,procut_category_code2 as procutCategoryCode2,
 		procut_category_name2 as procutCategoryName2,default_supplier_code as defaultSupplierCode,sp_unit_price as spUnitPrice,sp_currency_code as spCurrencyCode,
 		product_add_time as productAddTime,product_update_time as productUpdateTime,sale_status as saleStatus,p.create_time as createTime,p.update_time as updateTime,
-		product_title as productTitle,product_title_en as productTitleEn,picture_path as picturePath,picture_url as pictureUrl,picture_url as pictureData
+		product_title as productTitle,product_title_en as productTitleEn,picture_path as picturePath,picture_url as pictureUrl,picture_url as pictureData,main_picture_id as mainPictureId
 		 FROM api_product AS p LEFT JOIN api_product_desc AS d ON p.id = d.product_id
 		 LEFT JOIN api_product_picture pic ON pic.id = p.main_picture_id
 		<where>
