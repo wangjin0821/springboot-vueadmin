@@ -3,7 +3,6 @@ package com.wiggin.mangersys.web.controller;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,8 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.baomidou.mybatisplus.mapper.EntityWrapper;
-import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.wiggin.mangersys.domain.entity.Product;
 import com.wiggin.mangersys.domain.entity.ProductPicture;
 import com.wiggin.mangersys.service.ProductPictureService;
@@ -42,7 +39,7 @@ public class ProductController implements BaseExport {
 
     @Autowired
     private ProductService productService;
-    
+
     @Autowired
     private ProductPictureService productPicService;
 
@@ -100,23 +97,14 @@ public class ProductController implements BaseExport {
         ProductPageRequest productReq = BeanUtil.deepCopy(parameter, ProductPageRequest.class);
         return getProductList(productReq);
     }
-    
-    
+
+
     @GetMapping("/getProductPic")
     public List<ProductPicture> getProductPic(@RequestParam("productId") Integer productId) {
-        ProductPicture productPicture = new ProductPicture();
-        productPicture.setProductId(productId);
-        Wrapper<ProductPicture> wrapper = new EntityWrapper<>(productPicture);
-        List<ProductPicture> selectList = productPicService.selectList(wrapper);
-        if (CollectionUtils.isNotEmpty(selectList)) {
-            for (ProductPicture productPicture2 : selectList) {
-                productPicture2.setPictureUrl("http://localhost:8088" + productPicture2.getPicturePath());
-            }
-        }
-        return selectList;
+        return productPicService.getProductPicListById(productId);
     }
-    
-    
+
+
     @PostMapping("/saveProductPic")
     public Integer saveProductPic(@RequestBody ProductPicSaveRequest request) {
         Product product = new Product();

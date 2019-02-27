@@ -32,8 +32,8 @@
             <!-- <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">新增</el-button> -->
             <el-button class="filter-item" type="primary" icon="el-icon-download" @click="exportDialogVisible = true">导出SKU</el-button>
             <!-- <el-checkbox v-model="showReviewer" class="filter-item" style="margin-left:15px;" @change="tableKey=tableKey+1">测试</el-checkbox> -->
-            <el-button class="filter-item" type="primary" icon="el-icon-refresh" @click="syncProductList()">同步产品</el-button>
-            <el-button class="filter-item" type="primary" icon="el-icon-refresh" @click="parseProductLocalImage()">解析产品图片</el-button>
+            <el-button class="filter-item" type="primary" icon="el-icon-refresh" @click="syncProductList()" :loading="syncProductLoading">同步产品</el-button>
+            <el-button class="filter-item" type="primary" icon="el-icon-refresh" @click="parseProductLocalImage()" :loading="parseLocalImageLoading">解析产品图片</el-button>
           </div>
         </div>
         <div slot="body" v-loading="listLoading">
@@ -242,6 +242,8 @@ export default {
       listLoading: false,
       exportDialogVisible: false,
       exportLoading: false,
+      syncProductLoading: false,
+      parseLocalImageLoading: false,
       defaultProps: {
         children: 'children',
         label: 'name',
@@ -496,10 +498,22 @@ export default {
       })
     },
     syncProductList() {
-      syncProductList()
+      this.syncProductLoading = true
+      syncProductList().then(res => {
+        this.syncProductLoading = false
+      }).catch(error => {
+        $this.syncProductLoading = false
+        this.$message.error(error)
+      })
     },
     parseProductLocalImage() {
-      parseProductLocalImage()
+      this.parseLocalImageLoading = true
+      parseProductLocalImage().then(res => {
+        this.parseLocalImageLoading = false
+      }).catch(error => {
+        $this.parseLocalImageLoading = false
+        this.$message.error(error)
+      })
     }
   },
   created() {

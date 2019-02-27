@@ -1,7 +1,6 @@
 package com.wiggin.mangersys.service.impl;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -15,14 +14,13 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.baomidou.mybatisplus.plugins.pagination.Pagination;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.wiggin.mangersys.constant.ApplicationConstants;
 import com.wiggin.mangersys.domain.entity.Product;
 import com.wiggin.mangersys.domain.entity.ProductDesc;
 import com.wiggin.mangersys.domain.entity.ProductPicture;
@@ -89,8 +87,9 @@ public class ProductServiceImpl implements ProductService {
             List<EcProductSaleStatusResponse> salesStatusList = getSaleStatusList();
             Map<Integer, EcProductSaleStatusResponse> salesStatusMap = Maps.uniqueIndex(salesStatusList, EcProductSaleStatusResponse::getPSaleId);
             selectPage.forEach(item -> {
-                item.setPictureUrl("http://localhost:8088" + item.getPicturePath());
-                item.setPictureData("http://localhost:8088" + item.getPicturePath());
+                String pictureUrl = ApplicationConstants.pictureHost + item.getPicturePath();
+                item.setPictureUrl(pictureUrl);
+                item.setPictureData(pictureUrl);
                 if (salesStatusMap.containsKey(item.getSaleStatus())) {
                     item.setSaleStatusText(salesStatusMap.get(item.getSaleStatus()).getPSaleName());
                 }
@@ -310,15 +309,15 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
-    //@Transactional
+    // @Transactional
     public Integer parseProductLocalImage() {
         Map<String, List<File>> filePathMap = Maps.newConcurrentMap();
-        File dir = new File("E:\\picture");
+        File dir = new File(ApplicationConstants.picParseDir);
         BaseFileUtil.listDirectory(dir, filePathMap);
         if (filePathMap.isEmpty()) {
             return 0;
         }
-        List<String> imageTypeList = Lists.newArrayList("jpg", "png", "bmp", "gif", "jpeg");
+        List<String> imageTypeList = Lists.newArrayList(StringUtils.split(ApplicationConstants.picExtends, ","));
         // log.info("filePathList=>{}", filePathList);
         Product productEntity = new Product();
         productEntity.setIsParse(0);
@@ -336,8 +335,8 @@ public class ProductServiceImpl implements ProductService {
                         String suffix = fileName.substring(fileName.lastIndexOf(".") + 1);
                         if (imageTypeList.contains(suffix)) {
                             String path = file.getPath();
-                            String replacePath = StringUtils.replace(path, "E:\\picture", "");
-                            replacePath =  replacePath.replace("\\", "/");
+                            String replacePath = StringUtils.replace(path, ApplicationConstants.picParseDir, "");
+                            replacePath = replacePath.replace("\\", "/");
                             ProductPicture productPicture = new ProductPicture();
                             productPicture.setProductId(product.getId());
                             productPicture.setSku(product.getProductSku());
@@ -349,9 +348,10 @@ public class ProductServiceImpl implements ProductService {
                     product.setIsParse(1);
                     product.setParseTime(DateUtil.currentTime());
                     productMapper.updateById(product);
-                    productPictureList.forEach(productPic -> {
+                    productPicService.insertBatch(productPictureList);
+                    /*productPictureList.forEach(productPic -> {
                         producrtPicMapper.insert(productPic);
-                    });
+                    });*/
                 } else {
                     product.setIsParse(2);
                     product.setParseTime(DateUtil.currentTime());

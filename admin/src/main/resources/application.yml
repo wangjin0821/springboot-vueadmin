@@ -48,4 +48,8 @@ eccang:
   userPass: QWE123
   apiService: http://kaner.eccang.com
   pageSize: 1000
+product:
+  pictureHost: http://localhost:8088
+  picParseDir: E:\\picture
+  picExtends: jpg,png,bmp,gif,jpeg
  

@@ -169,7 +169,7 @@ public class EccangApi {
                 SOAPMessage soapMessage = msgFactory.createMessage(new MimeHeaders(), new ByteArrayInputStream(response.getBytes("utf-8")));
                 soapMessage.saveChanges();
                 SOAPBody soapBody = soapMessage.getSOAPBody();
-                Iterator childElements = soapBody.getChildElements();
+                Iterator<?> childElements = soapBody.getChildElements();
                 if (childElements.hasNext()) {
                     SOAPElement element = (SOAPElement) childElements.next();
                     responJsonStr = element.getTextContent();
