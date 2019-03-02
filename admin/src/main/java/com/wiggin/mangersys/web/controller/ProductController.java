@@ -95,6 +95,7 @@ public class ProductController implements BaseExport {
     @Override
     public Page<?> getExportList(Map<String, Object> parameter) {
         ProductPageRequest productReq = BeanUtil.deepCopy(parameter, ProductPageRequest.class);
+        productReq.setIsExport(true);
         return getProductList(productReq);
     }
 

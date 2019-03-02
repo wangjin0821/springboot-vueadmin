@@ -18,12 +18,12 @@
             </el-col>
           </el-row> -->
           <div class="filter-container">
-            <el-input :placeholder="listQuery.sku.title" v-model="listQuery.sku.value" style="width: 200px;" class="filter-item" @keyup.enter.native="search($event)"/>
+            <el-input :placeholder="listQuery.sku.title" v-model="listQuery.sku.value" style="width: 450px;" class="filter-item" @keyup.enter.native="search($event)"/>
             <el-select multiple collapse-tags v-model="listQuery.saleStatusList.value" :placeholder="listQuery.saleStatusList.title" clearable style="width: 200px" class="filter-item">
               <el-option v-for="item in queryParam.saleStatusList" :key="item.pSaleId" :label="item.pSaleName" :value="item.pSaleId"/>
             </el-select>
             <el-select v-model="listQuery.categoryList.value" :placeholder="listQuery.categoryList.title" clearable class="filter-item" style="width: 180px">
-              <el-option v-for="item in queryParam.categoryList" :key="item.pcId" :label="item.pcName" :value="item.pcId"/>
+              <el-option v-for="item in queryParam.categoryList" :key="item.pcId" :label="item.pcName" :value="item.pcId + '-' +item.pcLevel"/>
             </el-select>
             <!-- <el-select v-model="listQuery.sort" style="width: 140px" class="filter-item" @change="handleFilter">
               <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key"/>
@@ -125,7 +125,7 @@
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
             :current-page="tableData.pagination.pageNo"
-            :page-sizes="[5, 10, 20]"
+            :page-sizes="[5, 10, 20, 50, 100, 200]"
             :page-size="tableData.pagination.pageSize"
             layout="total, sizes, prev, pager, next, jumper"
             :total="tableData.pagination.total">
@@ -271,7 +271,7 @@ export default {
         pagination: {
           total: 0,
           pageNo: 1,
-          pageSize: 10,
+          pageSize: 20,
           parentId: 0
         },
         rows: []
@@ -400,7 +400,7 @@ export default {
       const listStr = JSON.stringify(exportFileList)
       const parameterStr = JSON.stringify({ sku: skuList })
       this.exportLoading = true
-      downLoadMix({ list: listStr, async: 'false', fileType: fileType, parameter: parameterStr }).then(res => {
+      downLoadMix({ fileName: 'exprotSkuList', list: listStr, async: 'false', fileType: fileType, parameter: parameterStr }).then(res => {
         this.$message('下载成功')
         this.exportLoading = false
       }, reject => {
@@ -482,7 +482,15 @@ export default {
         }
       }
       if (this.listQuery.sku.value !== '') {
-        params.sku = [this.listQuery.sku.value]
+        params.skuStr = this.listQuery.sku.value
+      }
+      if (this.listQuery.categoryList.value !== '') {
+        var cateArr = this.listQuery.categoryList.value.split('-')
+        if (cateArr[1] <= 0) {
+          params.category1 = cateArr[0]
+        } else {
+          params.category2 = cateArr[0]
+        }
       }
       if (this.listQuery.saleStatusList.value !== '' && this.listQuery.saleStatusList.value.length > 0) {
         params.saleStatus = this.listQuery.saleStatusList.value
@@ -500,18 +508,20 @@ export default {
     syncProductList() {
       this.syncProductLoading = true
       syncProductList().then(res => {
+        this.$message(res.message)
         this.syncProductLoading = false
       }).catch(error => {
-        $this.syncProductLoading = false
+        this.syncProductLoading = false
         this.$message.error(error)
       })
     },
     parseProductLocalImage() {
       this.parseLocalImageLoading = true
       parseProductLocalImage().then(res => {
+        this.$message(res.message)
         this.parseLocalImageLoading = false
       }).catch(error => {
-        $this.parseLocalImageLoading = false
+        this.parseLocalImageLoading = false
         this.$message.error(error)
       })
     }

@@ -30,4 +30,10 @@ public class ProductPageRequest {
 	
 	@ApiModelProperty("二级分类")
 	private Integer category2;
+	
+	@ApiModelProperty("sku模糊搜索字段")
+	private String SkuStr;
+	
+	@ApiModelProperty("是否导出")
+	private Boolean isExport;
 }

@@ -1,16 +1,10 @@
 package com.wiggin.mangersys.constant;
 
-import org.springframework.beans.factory.annotation.Value;
-
-
 public class ApplicationConstants {
 
-    @Value("product.pictureHost")
-    public static String pictureHost;
+    public static String pictureHost1 = "http://localhost:8088";
 
-    @Value("product.picParseDir")
-    public static String picParseDir;
-    
-    @Value("product.picExtends")
-    public static String picExtends;
+    public static String picParseDir1 = "E:\\picture";
+ 
+    public static String picExtends1 = "jpg,png,bmp,gif,jpeg";
 }

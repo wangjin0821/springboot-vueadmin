@@ -274,7 +274,7 @@ public class BaseFileUtil {
                 }
             }
             if (isAllFiles) {
-                filePathList.putIfAbsent(dir.getName(), Lists.newArrayList(files));
+                filePathList.putIfAbsent(dir.getName().toLowerCase(), Lists.newArrayList(files));
             }
         }
     }

@@ -20,6 +20,7 @@ import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.baomidou.mybatisplus.plugins.pagination.Pagination;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.wiggin.mangersys.config.ApplicationProperties;
 import com.wiggin.mangersys.constant.ApplicationConstants;
 import com.wiggin.mangersys.domain.entity.Product;
 import com.wiggin.mangersys.domain.entity.ProductDesc;
@@ -60,6 +61,9 @@ public class ProductServiceImpl implements ProductService {
     private static List<EcProductCategoryResponse> productCategoryList;
 
     @Autowired
+    private ApplicationProperties appProperties;
+    
+    @Autowired
     private ProductMapper productMapper;
 
     @Autowired
@@ -82,14 +86,40 @@ public class ProductServiceImpl implements ProductService {
     public Page<ProductPageResponse> getProductList(ProductPageRequest productReq) {
         log.info("productReq=>{}", productReq);
         Pagination pagination = productReq.getPagination();
+        String skuStr = productReq.getSkuStr();
+        if (StringUtils.isNotBlank(skuStr)) {
+            if (skuStr.indexOf(",") >= 0) {
+                List<String> skuList = Lists.newArrayList(skuStr.split(","));
+                List<String> skuList1 = skuList.parallelStream().filter(sku -> {
+                    return StringUtils.isNotBlank(sku);
+                }).collect(Collectors.toList());
+                productReq.setSku(skuList1);
+                productReq.setSkuStr(null);
+            }
+        }
         List<ProductPageResponse> selectPage = productMapper.selectProductPage(pagination, productReq);
         if (CollectionUtils.isNotEmpty(selectPage)) {
+            Boolean isExport = false;
+            if (productReq.getIsExport() != null && productReq.getIsExport()) {
+                isExport = true;
+            }
+            final Boolean isExprotFlag = isExport;
             List<EcProductSaleStatusResponse> salesStatusList = getSaleStatusList();
             Map<Integer, EcProductSaleStatusResponse> salesStatusMap = Maps.uniqueIndex(salesStatusList, EcProductSaleStatusResponse::getPSaleId);
+            String pictureHost = appProperties.getPictureHost();
+            String picDir = appProperties.getPicDir();
+            log.info("pictureHost => {}, picDir => {}", pictureHost, picDir);
             selectPage.forEach(item -> {
-                String pictureUrl = ApplicationConstants.pictureHost + item.getPicturePath();
-                item.setPictureUrl(pictureUrl);
-                item.setPictureData(pictureUrl);
+                if (StringUtils.isNotEmpty(item.getPicturePath())) {
+                    String pictureUrl = pictureHost + item.getPicturePath();
+                    item.setPictureUrl(pictureUrl);
+                    item.setPictureData(pictureUrl);
+                    if (isExprotFlag) {
+                        String picturePath = picDir + item.getPicturePath();
+                        item.setPictureData(picturePath);
+                    }
+                }
+
                 if (salesStatusMap.containsKey(item.getSaleStatus())) {
                     item.setSaleStatusText(salesStatusMap.get(item.getSaleStatus()).getPSaleName());
                 }
@@ -126,7 +156,7 @@ public class ProductServiceImpl implements ProductService {
         wrapper.orderBy("product_add_time", false);
         wrapper.last("LIMIT 1");
         List<Product> selectList = productMapper.selectList(wrapper);
-        if (selectList != null && selectList.get(0) != null) {
+        if (CollectionUtils.isNotEmpty(selectList)) {
             Product product = selectList.get(0);
             productReq.setProductAddTimeFrom(DateFormatUtils.format(product.getProductAddTime(), "yyyy-MM-dd HH:mm:ss"));
             // productReq.setProductAddTimeTo(new
@@ -312,12 +342,14 @@ public class ProductServiceImpl implements ProductService {
     // @Transactional
     public Integer parseProductLocalImage() {
         Map<String, List<File>> filePathMap = Maps.newConcurrentMap();
-        File dir = new File(ApplicationConstants.picParseDir);
+        String picParseDir = appProperties.getPicParseDir();
+        log.info("ApplicationConstants.picParseDir => {}", picParseDir);
+        File dir = new File(picParseDir);
         BaseFileUtil.listDirectory(dir, filePathMap);
         if (filePathMap.isEmpty()) {
             return 0;
         }
-        List<String> imageTypeList = Lists.newArrayList(StringUtils.split(ApplicationConstants.picExtends, ","));
+        List<String> imageTypeList = Lists.newArrayList(StringUtils.split(appProperties.getPicExtends(), ","));
         // log.info("filePathList=>{}", filePathList);
         Product productEntity = new Product();
         productEntity.setIsParse(0);
@@ -327,31 +359,47 @@ public class ProductServiceImpl implements ProductService {
             String[] split = StringUtils.split(product.getProductSku(), "-");
             if (split[0] != null) {
                 String[] split2 = StringUtils.split(split[0], ".");
-                if (split2[0] != null && filePathMap.containsKey(split2[0])) {
-                    List<File> fileList = filePathMap.get(split2[0]);
+                if (split2[0] != null && filePathMap.containsKey(split2[0].toLowerCase())) {
+                    List<File> fileList = filePathMap.get(split2[0].toLowerCase());
                     List<ProductPicture> productPictureList = Lists.newArrayList();
-                    fileList.forEach(file -> {
-                        String fileName = file.getName();
-                        String suffix = fileName.substring(fileName.lastIndexOf(".") + 1);
-                        if (imageTypeList.contains(suffix)) {
-                            String path = file.getPath();
-                            String replacePath = StringUtils.replace(path, ApplicationConstants.picParseDir, "");
-                            replacePath = replacePath.replace("\\", "/");
-                            ProductPicture productPicture = new ProductPicture();
-                            productPicture.setProductId(product.getId());
-                            productPicture.setSku(product.getProductSku());
-                            productPicture.setDefaultValue();
-                            productPicture.setPicturePath(replacePath);
-                            productPictureList.add(productPicture);
+                    log.info("fileList=>{}", fileList);
+                    if (CollectionUtils.isNotEmpty(fileList)) {
+                        fileList.forEach(file -> {
+                            String fileName = file.getName();
+                            String suffix = fileName.substring(fileName.lastIndexOf(".") + 1);
+                            if (imageTypeList.contains(suffix)) {
+                                String path = file.getPath();
+                                String replacePath = StringUtils.replace(path, picParseDir, "");
+                                replacePath = replacePath.replace("\\", "/");
+                                ProductPicture productPicture = new ProductPicture();
+                                productPicture.setProductId(product.getId());
+                                productPicture.setSku(product.getProductSku());
+                                productPicture.setDefaultValue();
+                                productPicture.setPicturePath(replacePath);
+                                productPictureList.add(productPicture);
+                            }
+                        });
+                        if (CollectionUtils.isNotEmpty(productPictureList)) {
+                            productPicService.insertBatch(productPictureList);
+
+                            product.setIsParse(1);
+                            product.setParseTime(DateUtil.currentTime());
+                            product.setMainPictureId(productPictureList.get(0).getId());
+                            productMapper.updateById(product);
+                        } else {
+                            product.setIsParse(2);
+                            product.setParseTime(DateUtil.currentTime());
+                            productMapper.updateById(product);
                         }
-                    });
-                    product.setIsParse(1);
-                    product.setParseTime(DateUtil.currentTime());
-                    productMapper.updateById(product);
-                    productPicService.insertBatch(productPictureList);
-                    /*productPictureList.forEach(productPic -> {
-                        producrtPicMapper.insert(productPic);
-                    });*/
+                    } else {
+                        product.setIsParse(2);
+                        product.setParseTime(DateUtil.currentTime());
+                        productMapper.updateById(product);
+                    }
+                    /*
+                     * productPictureList.forEach(productPic -> {
+                     * producrtPicMapper.insert(productPic); });
+                     */
                 } else {
                     product.setIsParse(2);
                     product.setParseTime(DateUtil.currentTime());

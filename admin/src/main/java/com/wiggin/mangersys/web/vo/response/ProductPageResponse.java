@@ -2,7 +2,7 @@ package com.wiggin.mangersys.web.vo.response;
 
 import com.wiggin.mangersys.domain.entity.Product;
 import com.wiggin.mangersys.util.report.annotation.ImportAndExportDataConversion;
-import com.wiggin.mangersys.util.report.util.ConverUrlToImageData;
+import com.wiggin.mangersys.util.report.util.ConvertPathToImageData;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -24,6 +24,6 @@ public class ProductPageResponse extends Product {
 
     private String pictureUrl;
 
-    @ImportAndExportDataConversion(specialDataConvert = true, conversionClass = ConverUrlToImageData.class)
+    @ImportAndExportDataConversion(specialDataConvert = true, conversionClass = ConvertPathToImageData.class)
     private String pictureData;
 }

@@ -18,17 +18,20 @@
 				    #{item}
 			    </foreach>
 			</if>
+			<if test='reqeustParam.skuStr != null and reqeustParam.skuStr != ""'>
+				AND p.product_sku like concat(#{reqeustParam.skuStr}, "%")
+			</if>
 			<if test="reqeustParam.saleStatus != null">
-				p.sale_status IN
+				AND p.sale_status IN
 				<foreach collection="reqeustParam.saleStatus" item="item" index="index" open="(" separator="," close=")">
 				    #{item}
 			    </foreach>
 			</if>
 			<if test="reqeustParam.category1 != null">
-				p.procut_category_code1 = #{reqeustParam.category1}
+				AND p.procut_category_code1 = #{reqeustParam.category1}
 			</if>
 			<if test="reqeustParam.category2 != null">
-				p.procut_category_code2 = #{reqeustParam.category2}
+				AND p.procut_category_code2 = #{reqeustParam.category2}
 			</if>
 		</where>
 	</select>
