@@ -83,3 +83,11 @@ export function parseProductLocalImage() {
     method: 'get'
   })
 }
+
+export function savePicPath(params) {
+  return request({
+    url: 'product/savePicPath',
+    method: 'post',
+    data: params
+  })
+}

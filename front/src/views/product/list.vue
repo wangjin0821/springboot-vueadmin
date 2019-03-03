@@ -32,8 +32,8 @@
             <!-- <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">新增</el-button> -->
             <el-button class="filter-item" type="primary" icon="el-icon-download" @click="exportDialogVisible = true">导出SKU</el-button>
             <!-- <el-checkbox v-model="showReviewer" class="filter-item" style="margin-left:15px;" @change="tableKey=tableKey+1">测试</el-checkbox> -->
-            <el-button class="filter-item" type="primary" icon="el-icon-refresh" @click="syncProductList()" :loading="syncProductLoading">同步产品</el-button>
-            <el-button class="filter-item" type="primary" icon="el-icon-refresh" @click="parseProductLocalImage()" :loading="parseLocalImageLoading">解析产品图片</el-button>
+            <el-button v-if="checkPermission(['admin'])" class="filter-item" type="primary" icon="el-icon-refresh" @click="syncProductList()" :loading="syncProductLoading">同步产品</el-button>
+            <el-button v-if="checkPermission(['admin'])" class="filter-item" type="primary" icon="el-icon-refresh" @click="parseProductLocalImage()" :loading="parseLocalImageLoading">解析产品图片</el-button>
           </div>
         </div>
         <div slot="body" v-loading="listLoading">
@@ -104,21 +104,28 @@
               prop="productAddTime"
               label="产品开发时间">
             </el-table-column>
-            <!-- <el-table-column label="操作" width="285">
+            <el-table-column label="操作" width="100">
               <template slot-scope="scope">
                 <el-button
+                  v-if="scope.row.isParse == 2"
+                  size="small"
+                  type="default"
+                  icon="edit"
+                  @click="handleSetPicPath(scope.$index, scope.row)">设置图片路径
+                </el-button>
+                <!-- <el-button
                   size="small"
                   type="default"
                   icon="edit"
                   @click="handleEdit(scope.$index, scope.row)">编辑
-                </el-button>
-                <el-button
+                </el-button> -->
+                <!-- <el-button
                   size="small"
                   type="danger"
                   @click="handleDelete(scope.$index, scope.row)">删除
-                </el-button>
+                </el-button> -->
               </template>
-            </el-table-column> -->
+            </el-table-column>
           </el-table>
     
           <el-pagination
@@ -214,12 +221,26 @@
           <el-button type="primary" @click="picDataSave" :loading="picSaveLoading">保 存</el-button>
         </div>
       </el-dialog>
+      <el-dialog title="设置图片路径" :visible.sync="setPicPathVisible">
+        <div>
+          <el-form ref="picPathFormData" :model="picPathFormData" :rules="formRules" label-width="120px">
+            <el-form-item label="图片路径">
+              <el-input name="sku" v-model="picPathFormData.path"></el-input>
+            </el-form-item>
+          </el-form>
+        </div>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="setPicPathVisible = false">取 消</el-button>
+          <el-button type="primary" @click="savePicPath" :loading="picPathSaveLoading">保 存</el-button>
+        </div>
+      </el-dialog>
   </div>
 </template>
 
 <script>
 import panel from '@/components/Panel'
-import { getList, deleted, update, add, downLoadMix, getSaleStatusList, getCategoryList, getProductPic, saveProductPic, syncProductList, parseProductLocalImage } from '@/api/product'
+import { getList, deleted, update, add, downLoadMix, getSaleStatusList, getCategoryList, getProductPic, saveProductPic, syncProductList, parseProductLocalImage, savePicPath } from '@/api/product'
+import checkPermission from '@/utils/permission' // 权限判断函数
 
 export default {
   components: {
@@ -244,6 +265,8 @@ export default {
       exportLoading: false,
       syncProductLoading: false,
       parseLocalImageLoading: false,
+      setPicPathVisible: false,
+      picPathSaveLoading: false,
       defaultProps: {
         children: 'children',
         label: 'name',
@@ -290,6 +313,10 @@ export default {
         productId: 0,
         picId: 0
       },
+      picPathFormData: {
+        productId: 0,
+        path: ''
+      },
       picDialogData: [],
       exportFromData: {
         position: 'top',
@@ -314,6 +341,7 @@ export default {
     }
   },
   methods: {
+    checkPermission,
     addSave() {
       this.$refs.formData.validate(valid => {
         if (valid) {
@@ -420,6 +448,26 @@ export default {
         salesVolume: 0
       }
       this.formVisible = true
+    },
+    handleSetPicPath(index, row) {
+      this.setPicPathVisible = true
+      this.picPathFormData.productId = row.id
+    },
+    savePicPath() {
+      console.log(this.picPathFormData)
+      if (this.picPathFormData.path === '') {
+        return false
+      }
+      this.picPathSaveLoading = true
+      savePicPath(this.picPathFormData).then(res => {
+        this.picPathSaveLoading = false
+        this.setPicPathVisible = false
+        this.$message(res.message)
+        this.loadData()
+      }).catch(error => {
+        this.picPathSaveLoading = false
+        this.$message.error(error)
+      })
     },
     handleSetPic(index, row) {
       getProductPic({ productId: row.id }).then(res => {

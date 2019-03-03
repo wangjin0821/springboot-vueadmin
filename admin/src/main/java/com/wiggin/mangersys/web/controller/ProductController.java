@@ -87,8 +87,8 @@ public class ProductController implements BaseExport {
 
 
     @GetMapping("/parseProductLocalImage")
-    public Integer parseProductLocalImage() {
-        return productService.parseProductLocalImage();
+    public Integer parseProductLocalImage(@RequestParam(name = "sku", required = false) String sku) {
+        return productService.parseProductLocalImage(sku);
     }
 
 
@@ -112,5 +112,11 @@ public class ProductController implements BaseExport {
         product.setId(request.getProductId());
         product.setMainPictureId(request.getPicId());
         return productService.updateProduct(product);
+    }
+    
+    
+    @PostMapping("/savePicPath")
+    public Integer savePicPath(@RequestBody ProductPicSaveRequest request) {
+        return productService.setProductPicPath(request);
     }
 }

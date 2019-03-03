@@ -18,6 +18,8 @@ public enum ExceptionCodeEnum {
 	// 导出相关异常
 	EXPORT_DATA_ERROR_CODE(9001, ""),
 	
+	PRODUCT_NOT_FOUND(3001, "产品找不到"),
+	
 	;
 	
 	private int code;

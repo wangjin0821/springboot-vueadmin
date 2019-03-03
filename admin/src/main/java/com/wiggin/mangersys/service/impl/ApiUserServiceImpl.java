@@ -104,10 +104,16 @@ public class ApiUserServiceImpl implements ApiUserService {
         UserInfoResponse userInfoResponse = new UserInfoResponse();
         userInfoResponse.setAvatar(selectOne.getAvater());
         userInfoResponse.setName(selectOne.getName());
-        userInfoResponse.setRole(Lists.newArrayList("admin"));
-        userInfoResponse.setRoles(Lists.newArrayList("admins"));
+        if ("wiggin".equals(selectOne.getName())) {
+            userInfoResponse.setRole(Lists.newArrayList("admin"));
+            userInfoResponse.setRoles(Lists.newArrayList("admin"));
+        } else {
+            userInfoResponse.setRole(Lists.newArrayList("normal"));
+            userInfoResponse.setRoles(Lists.newArrayList("normal"));
+        }
+        
         // form菜单
-        MenuResponse menuResponse = new MenuResponse();
+        /*MenuResponse menuResponse = new MenuResponse();
         menuResponse.setPath("/form");
         menuResponse.setLeaf(false);
         menuResponse.setComponent("Layout");
@@ -122,7 +128,7 @@ public class ApiUserServiceImpl implements ApiUserService {
         newHashMap.putIfAbsent("title", "表单");
         newHashMap.putIfAbsent("icon", "form");
         menuResponse1.setMeta(newHashMap);
-        menuResponse.setChildren(Lists.newArrayList(menuResponse1));
+        menuResponse.setChildren(Lists.newArrayList(menuResponse1));*/
 
         // 系统管理菜单
         MenuResponse menuResponseSys = new MenuResponse();
@@ -148,14 +154,16 @@ public class ApiUserServiceImpl implements ApiUserService {
         menuResponseSys1.setMeta(newHashMap2);
 
         MenuResponse menuResponseSys2 = new MenuResponse();
-        menuResponseSys2.setPath("user");
-        menuResponseSys2.setName("User");
-        menuResponseSys2.setComponent("system/user");
-        menuResponseSys2.setLeaf(true);
-        HashMap<String, String> newHashMap3 = Maps.newHashMap();
-        newHashMap3.putIfAbsent("title", "用户管理");
-        newHashMap3.putIfAbsent("icon", "form");
-        menuResponseSys2.setMeta(newHashMap3);
+        if ("wiggin".equals(selectOne.getName())) {
+            menuResponseSys2.setPath("user");
+            menuResponseSys2.setName("User");
+            menuResponseSys2.setComponent("system/user");
+            menuResponseSys2.setLeaf(true);
+            HashMap<String, String> newHashMap3 = Maps.newHashMap();
+            newHashMap3.putIfAbsent("title", "用户管理");
+            newHashMap3.putIfAbsent("icon", "form");
+            menuResponseSys2.setMeta(newHashMap3);
+        }
 
         MenuResponse menuResponseSys3 = new MenuResponse();
         menuResponseSys3.setPath("role");
@@ -176,7 +184,12 @@ public class ApiUserServiceImpl implements ApiUserService {
         newHashMap5.putIfAbsent("title", "资源管理");
         newHashMap5.putIfAbsent("icon", "form");
         menuResponseSys4.setMeta(newHashMap5);
-        menuResponseSys.setChildren(Lists.newArrayList(menuResponseSys1, menuResponseSys2, menuResponseSys3, menuResponseSys4));
+        if ("wiggin".equals(selectOne.getName())) {
+            menuResponseSys.setChildren(Lists.newArrayList(menuResponseSys1, menuResponseSys2, menuResponseSys3, menuResponseSys4));
+        } else {
+            menuResponseSys.setChildren(Lists.newArrayList(menuResponseSys1, menuResponseSys3, menuResponseSys4));
+        }
+        
 
         // 产品菜单
         MenuResponse menuResponseProd = new MenuResponse();
@@ -201,7 +214,7 @@ public class ApiUserServiceImpl implements ApiUserService {
         menuResponseProd1.setMeta(newHashMap7);
         menuResponseProd.setChildren(Lists.newArrayList(menuResponseProd1));
 
-        userInfoResponse.setMenuList(Lists.newArrayList(menuResponse, menuResponseSys, menuResponseProd));
+        userInfoResponse.setMenuList(Lists.newArrayList(/*menuResponse,*/ menuResponseSys, menuResponseProd));
         return userInfoResponse;
     }
 

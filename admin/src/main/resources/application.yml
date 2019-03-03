@@ -3,7 +3,7 @@ server:
   
 spring:
     profiles: 
-        active: dev
+        active: prod
     datasource:
         name: test
         url: jdbc:mysql://localhost:3306/api_system?useUnicode=true&characterEncoding=UTF-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&zeroDateTimeBehavior=convertToNull
@@ -59,9 +59,9 @@ spring:
   
 product:
   pictureHost: http://localhost:8088
-  picParseDir: E:\\picture
+  picParseDir: E:\picture
   picExtends: jpg,png,bmp,gif,jpeg
-  picDir: E:\\picture
+  picDir: E:\picture
 
 ---
 #test environment
@@ -80,9 +80,9 @@ spring:
   profiles: prod
   
 product:
-  pictureHost: http://localhost:2001
-  picParseDir: E:\\picture
+  pictureHost: http://192.168.1.168:8088
+  picParseDir: F:\共享\上架文件夹(已修好)
   picExtends: jpg,png,bmp,gif,jpeg
-  picDir: E:\\picture1
+  picDir: F:\共享\上架文件夹(已修好)
 
  

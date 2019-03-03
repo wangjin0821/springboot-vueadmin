@@ -7,6 +7,7 @@ import com.wiggin.mangersys.util.Page;
 import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductCategoryResponse;
 import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductSaleStatusResponse;
 import com.wiggin.mangersys.web.vo.request.ProductPageRequest;
+import com.wiggin.mangersys.web.vo.request.ProductPicSaveRequest;
 import com.wiggin.mangersys.web.vo.response.ProductPageResponse;
 
 /**
@@ -33,7 +34,9 @@ public interface ProductService {
 	
 	Integer syncProductMainImage(String sku);
 	
-	Integer parseProductLocalImage();
+	Integer parseProductLocalImage(String sku);
 	
 	Integer updateProduct(Product product);
+	
+	Integer setProductPicPath(ProductPicSaveRequest request);
 }

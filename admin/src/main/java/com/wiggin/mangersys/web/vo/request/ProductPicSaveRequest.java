@@ -8,4 +8,6 @@ public class ProductPicSaveRequest {
     private Integer productId;
     
     private Integer picId;
+    
+    private String path;
 }

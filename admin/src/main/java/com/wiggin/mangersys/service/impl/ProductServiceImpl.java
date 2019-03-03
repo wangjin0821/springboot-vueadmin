@@ -1,6 +1,7 @@
 package com.wiggin.mangersys.service.impl;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -14,14 +15,17 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.baomidou.mybatisplus.plugins.pagination.Pagination;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.wiggin.mangersys.config.ApplicationProperties;
-import com.wiggin.mangersys.constant.ApplicationConstants;
+import com.wiggin.mangersys.config.BusinessException;
+import com.wiggin.mangersys.config.ExceptionCodeEnum;
 import com.wiggin.mangersys.domain.entity.Product;
 import com.wiggin.mangersys.domain.entity.ProductDesc;
 import com.wiggin.mangersys.domain.entity.ProductPicture;
@@ -39,9 +43,11 @@ import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductRequest;
 import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductResponse;
 import com.wiggin.mangersys.util.apifeignclient.eccang.bean.EcProductSaleStatusResponse;
 import com.wiggin.mangersys.web.vo.request.ProductPageRequest;
+import com.wiggin.mangersys.web.vo.request.ProductPicSaveRequest;
 import com.wiggin.mangersys.web.vo.response.ProductPageResponse;
 
 import lombok.extern.slf4j.Slf4j;
+import rx.internal.operators.BufferUntilSubscriber;
 
 
 /**
@@ -340,7 +346,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     // @Transactional
-    public Integer parseProductLocalImage() {
+    public Integer parseProductLocalImage(String sku) {
         Map<String, List<File>> filePathMap = Maps.newConcurrentMap();
         String picParseDir = appProperties.getPicParseDir();
         log.info("ApplicationConstants.picParseDir => {}", picParseDir);
@@ -352,13 +358,18 @@ public class ProductServiceImpl implements ProductService {
         List<String> imageTypeList = Lists.newArrayList(StringUtils.split(appProperties.getPicExtends(), ","));
         // log.info("filePathList=>{}", filePathList);
         Product productEntity = new Product();
-        productEntity.setIsParse(0);
+        if (sku != null) {
+            productEntity.setProductSku(sku);
+        } else {
+            productEntity.setIsParse(0);
+        }
         Wrapper<Product> wrapper = new EntityWrapper<>(productEntity);
         List<Product> productList = productMapper.selectList(wrapper);
         for (Product product : productList) {
             String[] split = StringUtils.split(product.getProductSku(), "-");
             if (split[0] != null) {
                 String[] split2 = StringUtils.split(split[0], ".");
+                log.info("split2 => {}", JSON.toJSONString(split2));
                 if (split2[0] != null && filePathMap.containsKey(split2[0].toLowerCase())) {
                     List<File> fileList = filePathMap.get(split2[0].toLowerCase());
                     List<ProductPicture> productPictureList = Lists.newArrayList();
@@ -382,9 +393,14 @@ public class ProductServiceImpl implements ProductService {
                         if (CollectionUtils.isNotEmpty(productPictureList)) {
                             productPicService.insertBatch(productPictureList);
 
+                            Wrapper<ProductPicture> picWrapper = new EntityWrapper<>();
+                            picWrapper.eq("product_id", product.getId());
+                            List<ProductPicture> proPicList = productPicService.selectList(picWrapper);
+                            if (CollectionUtils.isNotEmpty(proPicList)) {
+                                product.setMainPictureId(proPicList.get(0).getId());
+                            }
                             product.setIsParse(1);
                             product.setParseTime(DateUtil.currentTime());
-                            product.setMainPictureId(productPictureList.get(0).getId());
                             productMapper.updateById(product);
                         } else {
                             product.setIsParse(2);
@@ -417,6 +433,74 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Integer updateProduct(Product product) {
         return productMapper.updateById(product);
+    }
+
+
+    @Override
+    @Transactional
+    public Integer setProductPicPath(ProductPicSaveRequest request) {
+        String picParseDir = appProperties.getPicParseDir();
+        File dir = new File(picParseDir + request.getPath());
+        if (!dir.exists()) {
+            throw new IllegalArgumentException("目录" + dir + "不存在！");
+        }
+        if (!dir.isDirectory()) {
+            throw new IllegalArgumentException(dir + "不是一个目录！");
+        }
+        FileFilter filter = new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return !".".equals(file.getName().substring(0, 1)) && !file.isDirectory();
+            }
+        };
+        File files[] = dir.listFiles(filter);
+        List<File> fileList = Lists.newArrayList(files);
+        log.info("fileList=>{}", fileList);
+        if (fileList.isEmpty()) {
+            return 0;
+        }
+        List<String> imageTypeList = Lists.newArrayList(StringUtils.split(appProperties.getPicExtends(), ","));
+        Product product = productMapper.selectById(request.getProductId());
+        if (product == null) {
+            throw new BusinessException(ExceptionCodeEnum.PRODUCT_NOT_FOUND);
+        }
+        List<ProductPicture> productPictureList = Lists.newArrayList();
+        
+        fileList.forEach(file -> {
+            String fileName = file.getName();
+            String suffix = fileName.substring(fileName.lastIndexOf(".") + 1);
+            if (imageTypeList.contains(suffix)) {
+                String path = file.getPath();
+                log.info("path =>{}, picParseDir=>{}" , path, picParseDir);
+                String replacePath = StringUtils.replace(path, picParseDir, "");
+                replacePath = replacePath.replace("\\", "/");
+                ProductPicture productPicture = new ProductPicture();
+                productPicture.setProductId(product.getId());
+                productPicture.setSku(product.getProductSku());
+                productPicture.setDefaultValue();
+                productPicture.setPicturePath(replacePath);
+                productPictureList.add(productPicture);
+            }
+        });
+        log.info("productPictureList => {}", productPictureList);
+        if (CollectionUtils.isNotEmpty(productPictureList)) {
+            productPicService.insertBatch(productPictureList);
+            
+            Wrapper<ProductPicture> picWrapper = new EntityWrapper<>();
+            picWrapper.eq("product_id", product.getId());
+            List<ProductPicture> proPicList = productPicService.selectList(picWrapper);
+            if (CollectionUtils.isNotEmpty(proPicList)) {
+                product.setMainPictureId(proPicList.get(0).getId());
+            }
+            product.setIsParse(1);
+            product.setParseTime(DateUtil.currentTime());
+            productMapper.updateById(product);
+        } else {
+            product.setIsParse(2);
+            product.setParseTime(DateUtil.currentTime());
+            productMapper.updateById(product);
+        }
+        return 1;
     }
 
 }
