@@ -30,7 +30,7 @@
             </el-select> -->
             <el-button class="filter-item" type="primary" icon="el-icon-search" @click="search($event)">搜索</el-button>
             <!-- <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">新增</el-button> -->
-            <el-button class="filter-item" type="primary" icon="el-icon-download" @click="exportDialogVisible = true">导出SKU</el-button>
+            <el-button class="filter-item" type="primary" icon="el-icon-download" @click="handlExprotDialog()">导出SKU</el-button>
             <!-- <el-checkbox v-model="showReviewer" class="filter-item" style="margin-left:15px;" @change="tableKey=tableKey+1">测试</el-checkbox> -->
             <el-button class="filter-item" type="primary" icon="el-icon-refresh" @click="syncProductList()" :loading="syncProductLoading">同步产品</el-button>
             <el-button class="filter-item" type="primary" icon="el-icon-refresh" @click="parseProductLocalImage()" :loading="parseLocalImageLoading">解析产品图片</el-button>
@@ -276,6 +276,7 @@ export default {
         },
         rows: []
       },
+      selectRows: [],
       formData: {
         id: 0,
         sku: '',
@@ -354,7 +355,7 @@ export default {
       this.loadData()
     },
     handleSelectionChange(val) {
-      console.log(val)
+      this.selectRows = val
     },
     handleSizeChange(val) {
       this.tableData.pagination.pageSize = val
@@ -363,6 +364,22 @@ export default {
     handleCurrentChange(val) {
       this.tableData.pagination.pageNo = val
       this.loadData()
+    },
+    handlExprotDialog() {
+      this.exportDialogVisible = true
+      const trimSkuText = this.exportFromData.skuText.trim()
+      let skuList = []
+      if (trimSkuText !== '') {
+          skuList = trimSkuText.split('\n')
+        }
+      if (this.selectRows.length > 0) {
+        this.selectRows.forEach(element => {
+          if (skuList.indexOf(element.productSku) === -1) {
+            skuList.push(element.productSku)
+          }
+        })
+      }
+      this.exportFromData.skuText = skuList.join('\n')
     },
     handlExprot() {
       const trimSkuText = this.exportFromData.skuText.trim()
@@ -402,6 +419,7 @@ export default {
       this.exportLoading = true
       downLoadMix({ fileName: 'exprotSkuList', list: listStr, async: 'false', fileType: fileType, parameter: parameterStr }).then(res => {
         this.$message('下载成功')
+        this.exportFromData.skuText = ''
         this.exportLoading = false
       }, reject => {
         this.exportLoading = false
