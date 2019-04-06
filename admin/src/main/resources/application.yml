@@ -3,7 +3,7 @@ server:
   
 spring:
     profiles: 
-        active: prod
+        active: dev
     datasource:
         name: test
         url: jdbc:mysql://localhost:3306/api_system?useUnicode=true&characterEncoding=UTF-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&zeroDateTimeBehavior=convertToNull
