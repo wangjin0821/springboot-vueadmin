@@ -216,6 +216,7 @@
           </el-form>
         </div>
         <div slot="footer" class="dialog-footer">
+          <el-button type="success" @click="picDataDown">下 载</el-button>
           <el-button @click="picDialog = false">取 消</el-button>
           <el-button type="primary" @click="picDataSave" :loading="picSaveLoading">保 存</el-button>
         </div>
@@ -525,6 +526,19 @@ export default {
         this.picSaveLoading = false
         this.$message.error(error)
       })
+    },
+    picDataDown() {
+      this.$message('开发中...')
+      // this.picSaveLoading = true
+      // saveProductPic(this.picFormData).then(res => {
+      //   this.$message(res.message)
+      //   this.picSaveLoading = false
+      //   this.picDialog = false
+      //   this.loadData()
+      // }).catch(error => {
+      //   this.picSaveLoading = false
+      //   this.$message.error(error)
+      // })
     },
     loadQueryParams() {
       if (this.queryParam.saleStatusList.length <= 0) {

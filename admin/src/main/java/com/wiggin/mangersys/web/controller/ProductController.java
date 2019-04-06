@@ -3,6 +3,8 @@ package com.wiggin.mangersys.web.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.assertj.core.util.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.google.common.collect.Maps;
 import com.wiggin.mangersys.domain.entity.Product;
 import com.wiggin.mangersys.domain.entity.ProductPicture;
 import com.wiggin.mangersys.service.ProductPictureService;
@@ -24,6 +27,8 @@ import com.wiggin.mangersys.web.vo.request.ProductPageRequest;
 import com.wiggin.mangersys.web.vo.request.ProductPicSaveRequest;
 import com.wiggin.mangersys.web.vo.response.ProductPageResponse;
 
+import lombok.extern.slf4j.Slf4j;
+
 
 /**
  * <p>
@@ -35,6 +40,7 @@ import com.wiggin.mangersys.web.vo.response.ProductPageResponse;
  */
 @RestController
 @RequestMapping("/product")
+@Slf4j
 public class ProductController implements BaseExport {
 
     @Autowired
@@ -94,9 +100,26 @@ public class ProductController implements BaseExport {
 
     @Override
     public Page<?> getExportList(Map<String, Object> parameter) {
+        log.info("parameter=>{}", parameter);
         ProductPageRequest productReq = BeanUtil.deepCopy(parameter, ProductPageRequest.class);
         productReq.setIsExport(true);
-        return getProductList(productReq);
+        Page<ProductPageResponse> productList = getProductList(productReq);
+        List<String> skuList = (List<String>) parameter.get("sku");
+        log.info("skuList=>{}", skuList);
+        if (productList != null && CollectionUtils.isNotEmpty(productList.getList())) {
+            Map<String, ProductPageResponse> productMap = Maps.newConcurrentMap();
+            for (ProductPageResponse productResponse : productList.getList()) {
+                productMap.putIfAbsent(productResponse.getProductSku(), productResponse);
+            }
+            List<ProductPageResponse> productListTemp = Lists.newArrayList();
+            for (String sku : skuList) {
+                if (productMap.containsKey(sku)) {
+                    productListTemp.add(productMap.get(sku));
+                }
+            }
+            productList.setList(productListTemp);
+        }
+        return productList;
     }
 
 
