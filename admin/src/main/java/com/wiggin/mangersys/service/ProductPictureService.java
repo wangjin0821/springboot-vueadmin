@@ -2,6 +2,8 @@ package com.wiggin.mangersys.service;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletResponse;
+
 import com.baomidou.mybatisplus.service.IService;
 import com.wiggin.mangersys.domain.entity.ProductPicture;
 
@@ -16,4 +18,6 @@ import com.wiggin.mangersys.domain.entity.ProductPicture;
 public interface ProductPictureService extends IService<ProductPicture> {
     
     public List<ProductPicture> getProductPicListById(Integer productId);
+    
+    public void downloadPicBySkus(List<String> skuList, HttpServletResponse response);
 }
